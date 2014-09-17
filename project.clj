@@ -16,7 +16,7 @@
   :dev-dependencies [[lein-ccw "1.2.0"]]
   ;; the following, or a variant, may be helpful on big machines
   ;:jvm-opts ["-Xmx58g" "-Xms58g" "-XX:+UseParallelGC"]
-  ;:jvm-opts ["-Xmx12g" "-Xms12g" "-XX:+UseParallelGC"]
+  :jvm-opts ["-Xmx12g" "-Xms12g" "-XX:+UseParallelGC"]
   ;:jvm-opts ["-Xmx58g" "-Xms58g" "-XX:+UseParallelGC" "-Djava.awt.headless=true"]
   ;; the following should automatically take 80% of the machine's RAM and also use the G1 garbage collector
 ;  :jvm-opts ~(let [mem-to-use (long (* (.getTotalPhysicalMemorySize

@@ -56,4 +56,6 @@
                                     :uniform-mutation 0.2}
    :parent-selection :tournament
    :tournament-size 2
+   :population-size 100000
+   :max-generations 100
    })
