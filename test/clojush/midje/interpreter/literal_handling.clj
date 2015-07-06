@@ -15,7 +15,15 @@
 (fact "Evaluating a null instruction returns the same state"
   (execute-instruction nil :test-state) => :test-state)
 
-(fact "Evaluating an integer constant as an instruction adds that value to the integer stack"
-      (let [test-state (make-push-state)
-            value 8]
-        (:integer (execute-instruction value (make-push-state))) => (list value)))
+
+(facts "Evaluating a scalar constant adds that value to the appropriate stack"
+      (let [test-state (make-push-state)]
+        (:integer (execute-instruction 8 (make-push-state))) => '(8)
+        (:boolean (execute-instruction false (make-push-state))) => '(false)
+        (:float (execute-instruction -2.3 (make-push-state))) => '(-2.3)))
+
+
+(fact "Evaluating a scalar constant pushes it onto the top of the appropriate stack"
+      (let [test-state (make-push-state)]
+        (:integer 
+          (execute-instruction 7 (execute-instruction 8 (make-push-state)))) => '(7 8)))
