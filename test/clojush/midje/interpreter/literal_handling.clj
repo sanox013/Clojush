@@ -17,13 +17,13 @@
 
 
 (facts "Evaluating a scalar constant adds that value to the appropriate stack"
-      (let [test-state (make-push-state)]
-        (:integer (execute-instruction 8 (make-push-state))) => '(8)
-        (:boolean (execute-instruction false (make-push-state))) => '(false)
-        (:float (execute-instruction -2.3 (make-push-state))) => '(-2.3)))
+  (:integer (execute-instruction 8 (make-push-state))) => '(8)
+  (:boolean (execute-instruction false (make-push-state))) => '(false)
+  (:float (execute-instruction -2.3 (make-push-state))) => '(-2.3)
+  (:string (execute-instruction "foo" (make-push-state))) => '("foo")
+  (:char (execute-instruction \y (make-push-state))) => '(\y))
 
 
 (fact "Evaluating a scalar constant pushes it onto the top of the appropriate stack"
-      (let [test-state (make-push-state)]
-        (:integer 
-          (execute-instruction 7 (execute-instruction 8 (make-push-state)))) => '(7 8)))
+  (:integer 
+    (execute-instruction 7 (execute-instruction 8 (make-push-state)))) => '(7 8))
