@@ -24,6 +24,31 @@
 (def vi-state (push-state-from-stacks :vector_integer '([1 2 3 4 5])))
 (def empty-on-enumerators-state (push-item (enum/new-enumerator []) :enumerator (make-push-state)))
 
+;;
+;; test contains-at-least? helper
+;;
+
+(def busy-state (push-state-from-stacks
+  :integer '(9 9 -1) 
+  :boolean '(false true) 
+  :code '(7 [3 2 1] in1) 
+  :exec '(integer_add))) 
+
+(facts "contains-at-least? indicates that at least the specified number of items are present on the stacks of a state"
+  (contains-at-least? make-push-state :integer 0) => truthy
+  (contains-at-least? make-push-state :boolean 0) => truthy
+  (contains-at-least? make-push-state :boolean 1912) => falsey
+
+  (contains-at-least? busy-state :integer 3) => truthy
+  (contains-at-least? busy-state :integer 4) => falsey
+  (contains-at-least? busy-state :boolean 2) => truthy
+  (contains-at-least? busy-state :boolean 3) => falsey
+  (contains-at-least? busy-state :code 3) => truthy
+  (contains-at-least? busy-state :code 4) => falsey
+  (contains-at-least? busy-state :exec 1) => truthy
+  (contains-at-least? busy-state :exec 2) => falsey
+  (contains-at-least? busy-state :vector_foo 2) => falsey
+)
 
 ;;
 ;; enumerator_from_vector_integer

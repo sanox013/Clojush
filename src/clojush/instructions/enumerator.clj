@@ -24,11 +24,25 @@
 ;; such an 'empty' instance should destroy it rather than returning results. This includes `unwrap`.
 
 
+(defn contains-at-least?
+  "Returns true only when the number of items in all of the
+  indicated prerequisite stacks meets or exceeds the number in state"
+  [state & {:as prerequisites}]
+  (reduce-kv 
+    (fn [satisfied type requirement] 
+      (and 
+        satisfied 
+        (>= (count (type state)) requirement)))
+    true
+    prerequisites)
+  )
+
+
 (define-registered
   enumerator_from_vector_integer
   ^{:stack-types [:vector_integer :enumerator]}
   (fn [state]
-    (if (not (empty? (:vector_integer state)))
+    (if (contains-at-least? state :vector_integer 1)
       (let [collection (first (:vector_integer state))
             popped-state (pop-item :vector_integer state)]
         (if (not (empty? collection))
@@ -42,7 +56,7 @@
   enumerator_unwrap
   ^{:stack-types [:enumerator :exec]}
   (fn [state]
-    (if (not (empty? (:enumerator state)))
+    (if (contains-at-least? state :enumerator 1)
       (let [old-seq (:collection (top-item :enumerator state))
             popped-state (pop-item :enumerator state)]
         (if (not (empty? old-seq))
@@ -54,7 +68,7 @@
   enumerator_rewind
   ^{:stack-types [:enumerator]}
   (fn [state]
-    (if (not (empty? (:enumerator state)))
+    (if (contains-at-least? state :enumerator 1)
       (let [old-seq (:collection (top-item :enumerator state))
             popped-state (pop-item :enumerator state)]
         (if (not (empty? old-seq))
@@ -66,7 +80,7 @@
   enumerator_ff
   ^{:stack-types [:enumerator :exec]}
   (fn [state]
-    (if (not (empty? (:enumerator state)))
+    (if (contains-at-least? state :enumerator 1)
       (let [old-seq (:collection (top-item :enumerator state))
             popped-state (pop-item :enumerator state)]
         (if (not (empty? old-seq))
@@ -78,7 +92,7 @@
   enumerator_first
   ^{:stack-types [:enumerator :exec]}
   (fn [state]
-    (if (not (empty? (:enumerator state)))
+    (if (contains-at-least? state :enumerator 1)
       (let [old-seq (:collection (top-item :enumerator state))
             popped-state (pop-item :enumerator state)]
         (if (not (empty? old-seq))
@@ -89,14 +103,14 @@
               (first old-seq)
               :exec
               popped-state))))
-    state)))
+      state)))
 
 
 (define-registered
   enumerator_last
   ^{:stack-types [:enumerator :exec]}
   (fn [state]
-    (if (not (empty? (:enumerator state)))
+    (if (contains-at-least? state :enumerator 1)
       (let [old-seq (:collection (top-item :enumerator state))
             popped-state (pop-item :enumerator state)]
         (if (not (empty? old-seq))
@@ -107,14 +121,14 @@
               (last old-seq)
               :exec
               popped-state))))
-    state)))
+      state)))
 
 
 (define-registered
   enumerator_forward
   ^{:stack-types [:enumerator]}
   (fn [state]
-    (if (not (empty? (:enumerator state)))
+    (if (contains-at-least? state :enumerator 1)
       (let [old-state (top-item :enumerator state)
             old-seq (:collection old-state)
             old-ptr (:pointer old-state)
@@ -122,14 +136,14 @@
             popped-state (pop-item :enumerator state)]
         (if (and (not (empty? old-seq)) (not done))
           (push-item (enum/construct-enumerator old-seq (inc old-ptr)) :enumerator popped-state)))
-    state)))
+      state)))
 
 
 (define-registered
   enumerator_backward
   ^{:stack-types [:enumerator]}
   (fn [state]
-    (if (not (empty? (:enumerator state)))
+    (if (contains-at-least? state :enumerator 1)
       (let [old-state (top-item :enumerator state)
             old-seq (:collection old-state)
             old-ptr (:pointer old-state)
@@ -144,7 +158,7 @@
   enumerator_next
   ^{:stack-types [:enumerator :exec]}
   (fn [state]
-    (if (not (empty? (:enumerator state)))
+    (if (contains-at-least? state :enumerator 1)
       (let [old-state (top-item :enumerator state)
             old-seq (:collection old-state)
             old-ptr (:pointer old-state)
@@ -161,7 +175,7 @@
   enumerator_prev
   ^{:stack-types [:enumerator :exec]}
   (fn [state]
-    (if (not (empty? (:enumerator state)))
+    (if (contains-at-least? state :enumerator 1)
       (let [old-state (top-item :enumerator state)
             old-seq (:collection old-state)
             old-ptr (:pointer old-state)
