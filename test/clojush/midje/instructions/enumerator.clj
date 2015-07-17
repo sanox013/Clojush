@@ -57,6 +57,11 @@
   (count (:enumerator (execute-instruction 'enumerator_unwrap counter-on-enumerators-state))) =>  0
   )
 
+(fact "the enumerator is destroyed if it is empty" 
+  (top-item :exec (execute-instruction 'enumerator_unwrap empty-on-enumerators-state)) => :no-stack-item 
+  (top-item :enumerator (execute-instruction 'enumerator_unwrap empty-on-enumerators-state)) => :no-stack-item 
+  )
+
 ;;
 ;; enumerator_rewind
 ;;

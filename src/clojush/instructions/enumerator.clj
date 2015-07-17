@@ -20,6 +20,8 @@
 ;; instance. The only state changes that should ever happen are changes in the pointer value
 ;; and the loop? state.
 ;;
+;; No Enumerator instance should be made from an empty collection. Any instruction that encounters
+;; such an 'empty' instance should destroy it rather than returning results. This includes `unwrap`.
 
 
 (define-registered
@@ -43,7 +45,8 @@
     (if (not (empty? (:enumerator state)))
       (let [old-seq (:collection (top-item :enumerator state))
             popped-state (pop-item :enumerator state)]
-      (push-item  old-seq :exec popped-state))
+        (if (not (empty? old-seq))
+          (push-item  old-seq :exec popped-state)))
     state)))
 
 
