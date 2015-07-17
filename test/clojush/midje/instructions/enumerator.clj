@@ -37,11 +37,11 @@
   )
 
 (fact "the created item should be an Enumerator with the original vector_integer as its seq"
-  (:collection (first (:enumerator (execute-instruction 'enumerator_from_vector_integer vi-state)))) => (just 1 2 3 4 5)
+  (:collection (top-item :enumerator (execute-instruction 'enumerator_from_vector_integer vi-state))) => (just 1 2 3 4 5)
   ) 
 
 (fact "the created enumerator should have pointer set to 0"
-  (:pointer (first (:enumerator (execute-instruction 'enumerator_from_vector_integer vi-state)))) => 0
+  (:pointer (top-item :enumerator (execute-instruction 'enumerator_from_vector_integer vi-state))) => 0
   )
 
 (fact "no enumerator is created from an empty vector" 
@@ -53,7 +53,7 @@
 ;;
 
 (fact "enumerator_unwrap should push the :enumerator's collection onto the :exec stack"
-  (first (:exec (execute-instruction 'enumerator_unwrap counter-on-enumerators-state))) =>  (:collection counter)
+  (top-item :exec (execute-instruction 'enumerator_unwrap counter-on-enumerators-state)) =>  (:collection counter)
   (count (:enumerator (execute-instruction 'enumerator_unwrap counter-on-enumerators-state))) =>  0
   )
 
@@ -66,20 +66,19 @@
 ;; enumerator_rewind
 ;;
 
-(fact "enumerator_rewind should move the :enumerator with pointer->0 onto the :exec stack"
-  (enum/enumerator? (top-item :exec (execute-instruction 'enumerator_rewind counter-on-enumerators-state))) =>  truthy 
-  (:pointer (top-item :exec (execute-instruction 'enumerator_rewind counter-on-enumerators-state))) =>  0
-  (count (:enumerator (execute-instruction 'enumerator_rewind counter-on-enumerators-state))) =>  0 
+(fact "enumerator_rewind should reset the argument's pointer->0"
+  (enum/enumerator? (top-item :enumerator (execute-instruction 'enumerator_rewind counter-on-enumerators-state))) =>  truthy 
+  (:pointer (top-item :enumerator (execute-instruction 'enumerator_rewind counter-on-enumerators-state))) =>  0
+  (count (:enumerator (execute-instruction 'enumerator_rewind counter-on-enumerators-state))) =>  1
   )
 
 (def advanced-counter-on-enumerators-state (push-item (enum/construct-enumerator [1 2 3 4 5] 3) :enumerator (make-push-state)))
 
 (fact "enumerator_rewind should actively change the pointer"
-  (:pointer (top-item :exec (execute-instruction 'enumerator_rewind advanced-counter-on-enumerators-state))) =>  0
+  (:pointer (top-item :enumerator (execute-instruction 'enumerator_rewind advanced-counter-on-enumerators-state))) =>  0
   )
 
 (fact "the enumerator is destroyed if it is empty" 
-  (top-item :exec (execute-instruction 'enumerator_rewind empty-on-enumerators-state)) => :no-stack-item 
   (top-item :enumerator (execute-instruction 'enumerator_rewind empty-on-enumerators-state)) => :no-stack-item 
   )
 
@@ -88,14 +87,12 @@
 ;; enumerator_ff
 ;;
 
-(fact "enumerator_ff should move the :enumerator with pointer->max onto the :exec stack"
-  (enum/enumerator? (top-item :exec (execute-instruction 'enumerator_ff counter-on-enumerators-state))) =>  truthy 
-  (:pointer (top-item :exec (execute-instruction 'enumerator_ff counter-on-enumerators-state))) =>  4 
-  (count (:enumerator (execute-instruction 'enumerator_ff counter-on-enumerators-state))) =>  0 
+(fact "enumerator_ff should move the top :enumerator item's pointer to its max value (length - 1)"
+  (enum/enumerator? (top-item :enumerator (execute-instruction 'enumerator_ff counter-on-enumerators-state))) =>  truthy 
+  (:pointer (top-item :enumerator (execute-instruction 'enumerator_ff counter-on-enumerators-state))) =>  4 
   )
 
 (fact "the enumerator is destroyed if it is empty" 
-  (top-item :exec (execute-instruction 'enumerator_ff empty-on-enumerators-state)) => :no-stack-item 
   (top-item :enumerator (execute-instruction 'enumerator_ff empty-on-enumerators-state)) => :no-stack-item 
   )
 
@@ -103,15 +100,14 @@
 ;; enumerator_first
 ;;
 
-(facts "enumerator_first should move the :enumerator with pointer->0 onto the :exec stack, above its first item"
-  (enum/enumerator? (top-item :exec (execute-instruction 'enumerator_first counter-on-enumerators-state))) =>  truthy 
-  (count (:exec (execute-instruction 'enumerator_first counter-on-enumerators-state))) =>  2
-  (stack-ref :exec 1 (execute-instruction 'enumerator_first counter-on-enumerators-state)) =>  1
-  (:pointer (top-item :exec (execute-instruction 'enumerator_first counter-on-enumerators-state))) =>  0
-  (count (:enumerator (execute-instruction 'enumerator_first counter-on-enumerators-state))) =>  0 
+(facts "enumerator_first should set the pointer to 0, AND push the first item to the :exec stack"
+  (enum/enumerator? (top-item :enumerator (execute-instruction 'enumerator_first counter-on-enumerators-state))) =>  truthy 
+  (count (:exec (execute-instruction 'enumerator_first counter-on-enumerators-state))) =>  1
+  (top-item :exec (execute-instruction 'enumerator_first counter-on-enumerators-state)) =>  1
+  (:pointer (top-item :enumerator (execute-instruction 'enumerator_first counter-on-enumerators-state))) =>  0
   )
 
 (fact "the enumerator is destroyed if it is empty" 
+  (top-item :enumerator (execute-instruction 'enumerator_first empty-on-enumerators-state)) => :no-stack-item
   (top-item :exec (execute-instruction 'enumerator_first empty-on-enumerators-state)) => :no-stack-item 
-  (top-item :enumerator (execute-instruction 'enumerator_first empty-on-enumerators-state)) => :no-stack-item 
   )

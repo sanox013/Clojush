@@ -52,13 +52,13 @@
 
 (define-registered
   enumerator_rewind
-  ^{:stack-types [:enumerator :exec]}
+  ^{:stack-types [:enumerator]}
   (fn [state]
     (if (not (empty? (:enumerator state)))
       (let [old-seq (:collection (top-item :enumerator state))
             popped-state (pop-item :enumerator state)]
         (if (not (empty? old-seq))
-          (push-item (enum/new-enumerator old-seq) :exec popped-state)))
+          (push-item (enum/new-enumerator old-seq) :enumerator popped-state)))
     state)))
 
 
@@ -70,7 +70,7 @@
       (let [old-seq (:collection (top-item :enumerator state))
             popped-state (pop-item :enumerator state)]
         (if (not (empty? old-seq))
-          (push-item (enum/construct-enumerator old-seq (- (count old-seq) 1)) :exec popped-state)))
+          (push-item (enum/construct-enumerator old-seq (- (count old-seq) 1)) :enumerator popped-state)))
     state)))
 
 
@@ -84,7 +84,7 @@
         (if (not (empty? old-seq))
           (push-item 
             (enum/new-enumerator old-seq)
-            :exec
+            :enumerator
             (push-item 
               (first old-seq)
               :exec
