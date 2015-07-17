@@ -70,7 +70,7 @@
       (let [old-seq (:collection (top-item :enumerator state))
             popped-state (pop-item :enumerator state)]
         (if (not (empty? old-seq))
-          (push-item (enum/construct-enumerator old-seq (- (count old-seq) 1)) :enumerator popped-state)))
+          (push-item (enum/construct-enumerator old-seq (dec (count old-seq))) :enumerator popped-state)))
     state)))
 
 
@@ -91,6 +91,7 @@
               popped-state))))
     state)))
 
+
 (define-registered
   enumerator_last
   ^{:stack-types [:enumerator :exec]}
@@ -100,10 +101,40 @@
             popped-state (pop-item :enumerator state)]
         (if (not (empty? old-seq))
           (push-item 
-            (enum/construct-enumerator old-seq (- (count old-seq) 1))
+            (enum/construct-enumerator old-seq (dec (count old-seq)))
             :enumerator
             (push-item 
               (last old-seq)
               :exec
               popped-state))))
+    state)))
+
+
+(define-registered
+  enumerator_forward
+  ^{:stack-types [:enumerator]}
+  (fn [state]
+    (if (not (empty? (:enumerator state)))
+      (let [old-state (top-item :enumerator state)
+            old-seq (:collection old-state)
+            old-ptr (:pointer old-state)
+            done (>= (inc old-ptr) (count old-seq))
+            popped-state (pop-item :enumerator state)]
+        (if (and (not (empty? old-seq)) (not done))
+          (push-item (enum/construct-enumerator old-seq (inc old-ptr)) :enumerator popped-state)))
+    state)))
+
+
+(define-registered
+  enumerator_backward
+  ^{:stack-types [:enumerator]}
+  (fn [state]
+    (if (not (empty? (:enumerator state)))
+      (let [old-state (top-item :enumerator state)
+            old-seq (:collection old-state)
+            old-ptr (:pointer old-state)
+            done (neg? (dec old-ptr))
+            popped-state (pop-item :enumerator state)]
+        (if (and (not (empty? old-seq)) (not done))
+          (push-item (enum/construct-enumerator old-seq (dec old-ptr)) :enumerator popped-state)))
     state)))

@@ -96,6 +96,7 @@
   (top-item :enumerator (execute-instruction 'enumerator_ff empty-on-enumerators-state)) => :no-stack-item 
   )
 
+
 ;;
 ;; enumerator_first
 ;;
@@ -112,6 +113,7 @@
   (top-item :exec (execute-instruction 'enumerator_first empty-on-enumerators-state)) => :no-stack-item 
   )
 
+
 ;;
 ;; enumerator_last
 ;;
@@ -126,4 +128,68 @@
 (fact "the enumerator is destroyed if it is empty" 
   (top-item :enumerator (execute-instruction 'enumerator_last empty-on-enumerators-state)) => :no-stack-item
   (top-item :exec (execute-instruction 'enumerator_last empty-on-enumerators-state)) => :no-stack-item 
+  )
+
+;;
+;; enumerator_forward
+;;
+
+(facts "enumerator_forward should advance the pointer by one"
+  (enum/enumerator? (top-item :enumerator (execute-instruction 'enumerator_forward counter-on-enumerators-state))) =>  truthy 
+  (:pointer (top-item :enumerator (execute-instruction 'enumerator_forward counter-on-enumerators-state))) =>  1
+  )
+
+(fact "the enumerator is destroyed if it is empty" 
+  (top-item :enumerator (execute-instruction 'enumerator_forward empty-on-enumerators-state)) => :no-stack-item
+  (top-item :exec (execute-instruction 'enumerator_forward empty-on-enumerators-state)) => :no-stack-item 
+  )
+
+(def maxed-counter-on-enumerators-state (push-item (enum/construct-enumerator [1 2 3 4 5] 4) :enumerator (make-push-state)))
+
+(fact "the enumerator is destroyed if the pointer advances past the max" 
+  (top-item :enumerator (execute-instruction 'enumerator_forward maxed-counter-on-enumerators-state)) => :no-stack-item
+  (top-item :exec (execute-instruction 'enumerator_forward maxed-counter-on-enumerators-state)) => :no-stack-item 
+  )
+
+
+;;
+;; enumerator_backward
+;;
+
+(facts "enumerator_backward should advance the pointer by one"
+  (enum/enumerator? (top-item :enumerator (execute-instruction 
+    'enumerator_backward advanced-counter-on-enumerators-state))) => truthy 
+  (:pointer (top-item :enumerator (execute-instruction
+    'enumerator_backward advanced-counter-on-enumerators-state))) => 2
+  )
+
+(fact "the enumerator is destroyed if it is empty" 
+  (top-item :enumerator (execute-instruction 'enumerator_backward empty-on-enumerators-state)) => :no-stack-item
+  (top-item :exec (execute-instruction 'enumerator_backward empty-on-enumerators-state)) => :no-stack-item 
+  )
+
+(fact "the enumerator is destroyed if the pointer advances past the max" 
+  (top-item :enumerator (execute-instruction 'enumerator_backward counter-on-enumerators-state)) => :no-stack-item
+  (top-item :exec (execute-instruction 'enumerator_backward counter-on-enumerators-state)) => :no-stack-item 
+  )
+
+
+;;
+;; enumerator_next
+;;
+
+(facts "enumerator_next should advance the pointer by one, and pushes the CURRENT item"
+  (enum/enumerator? (top-item :enumerator (execute-instruction 'enumerator_next counter-on-enumerators-state))) =>  truthy 
+  (:pointer (top-item :enumerator (execute-instruction 'enumerator_next counter-on-enumerators-state))) =>  1
+  (top-item :exec (execute-instruction 'enumerator_next counter-on-enumerators-state)) =>  1
+  )
+
+(fact "the enumerator is destroyed if it is empty" 
+  (top-item :enumerator (execute-instruction 'enumerator_next empty-on-enumerators-state)) => :no-stack-item
+  (top-item :exec (execute-instruction 'enumerator_next empty-on-enumerators-state)) => :no-stack-item 
+  )
+
+(fact "the enumerator is destroyed if the pointer advances past the max, BUT pushes the last item" 
+  (top-item :enumerator (execute-instruction 'enumerator_next maxed-counter-on-enumerators-state)) => :no-stack-item
+  (top-item :exec (execute-instruction 'enumerator_next maxed-counter-on-enumerators-state)) => 1
   )
