@@ -45,6 +45,3 @@
   (top-item :enumerator (run-push '() counter-on-exec-state)) => counter
   (count (:exec (run-push '() counter-on-exec-state))) => 0
   )
-
-(def vi-state (push-state-from-stacks :vector_integer '([1 2 3 4 5])))
-

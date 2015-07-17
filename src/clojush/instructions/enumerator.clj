@@ -43,3 +43,12 @@
       (push-item  old-seq :exec popped-state))
     state)))
 
+(define-registered
+  enumerator_rewind
+  ^{:stack-types [:enumerator :exec]}
+  (fn [state]
+    (if (not (empty? (:enumerator state)))
+      (let [old-seq (:collection (top-item :enumerator state))
+            popped-state (pop-item :enumerator state)]
+      (push-item (enum/new-enumerator old-seq) :exec popped-state))
+    state)))

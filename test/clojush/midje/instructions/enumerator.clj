@@ -18,6 +18,8 @@
 (def counter (enum/construct-enumerator [1 2 3 4 5] 0))
 (def counter-on-exec-state (push-item counter :exec (make-push-state)))
 (def counter-on-enumerators-state (push-item counter :enumerator (make-push-state)))
+(def vi-state (push-state-from-stacks :vector_integer '([1 2 3 4 5])))
+
 
 ;;
 ;; enumerator_from_vector_integer
@@ -47,3 +49,18 @@
   (count (:enumerator (execute-instruction 'enumerator_unwrap counter-on-enumerators-state))) =>  0
   )
 
+;;
+;; enumerator_rewind
+;;
+
+(fact "enumerator_rewind should move the :enumerator with pointer->0 onto the :exec stack"
+  (enum/enumerator? (top-item :exec (execute-instruction 'enumerator_rewind counter-on-enumerators-state))) =>  truthy 
+  (:pointer (top-item :exec (execute-instruction 'enumerator_rewind counter-on-enumerators-state))) =>  0
+  (count (:enumerator (execute-instruction 'enumerator_rewind counter-on-enumerators-state))) =>  0 
+  )
+
+(def advanced-counter-on-enumerators-state (push-item (enum/construct-enumerator [1 2 3 4 5] 3) :enumerator (make-push-state)))
+
+(fact "enumerator_rewind should actively change the pointer"
+  (:pointer (top-item :exec (execute-instruction 'enumerator_rewind advanced-counter-on-enumerators-state))) =>  0
+  )
