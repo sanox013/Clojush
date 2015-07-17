@@ -11,7 +11,6 @@
 ;; an Enumerator is a simple Clojure record containing
 ;;   - an immutable seq (list, vector, map, string, etc)
 ;;   - a pointer variable, an integer, which indicates which item is "current"
-;;   - an boolean value indicating whether it "loops" or not
 ;;
 ;; Rules of thumb:
 ;; 
@@ -25,3 +24,20 @@
 ;; and the loop? state.
 ;;
 
+(defrecord Enumerator [collection pointer])
+
+;; because defrecord trying to cross namespaces is awful
+(defn make-enumerator [contents pointer] 
+  (Enumerator. contents pointer))
+
+
+(define-registered
+  enumerator_from_vector_integer
+  ^{:stack-types [:vector_integer :enumerator]}
+  (fn [state]
+    (if (not (empty? (:vector_integer state)))
+      (let [collection (first (:vector_integer state)) pointer 0]
+      (push-item (make-enumerator collection pointer)
+                 :enumerator
+                 (pop-item :vector_integer state)))
+      state)))

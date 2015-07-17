@@ -15,7 +15,10 @@
 (def push-types '(:exec :code :integer :float :boolean :char :string :zip
                         :vector_integer :vector_float :vector_boolean :vector_string
                         :input :output :auxiliary
-                        :tag :return :environment :genome)) ;; Stack types
+                        :tag :return :environment :genome
+                        :enumerator)) ;; Stack types
+
+
 
 ;; These definitions are used by instructions to keep computed values within limits
 ;; or when using random instructions.
