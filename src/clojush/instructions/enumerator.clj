@@ -90,3 +90,20 @@
               :exec
               popped-state))))
     state)))
+
+(define-registered
+  enumerator_last
+  ^{:stack-types [:enumerator :exec]}
+  (fn [state]
+    (if (not (empty? (:enumerator state)))
+      (let [old-seq (:collection (top-item :enumerator state))
+            popped-state (pop-item :enumerator state)]
+        (if (not (empty? old-seq))
+          (push-item 
+            (enum/construct-enumerator old-seq (- (count old-seq) 1))
+            :enumerator
+            (push-item 
+              (last old-seq)
+              :exec
+              popped-state))))
+    state)))

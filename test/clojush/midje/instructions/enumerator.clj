@@ -111,3 +111,19 @@
   (top-item :enumerator (execute-instruction 'enumerator_first empty-on-enumerators-state)) => :no-stack-item
   (top-item :exec (execute-instruction 'enumerator_first empty-on-enumerators-state)) => :no-stack-item 
   )
+
+;;
+;; enumerator_last
+;;
+
+(facts "enumerator_last should set the pointer to its max, AND push the last item to the :exec stack"
+  (enum/enumerator? (top-item :enumerator (execute-instruction 'enumerator_last counter-on-enumerators-state))) =>  truthy 
+  (count (:exec (execute-instruction 'enumerator_last counter-on-enumerators-state))) =>  1
+  (top-item :exec (execute-instruction 'enumerator_last counter-on-enumerators-state)) =>  5
+  (:pointer (top-item :enumerator (execute-instruction 'enumerator_last counter-on-enumerators-state))) =>  4
+  )
+
+(fact "the enumerator is destroyed if it is empty" 
+  (top-item :enumerator (execute-instruction 'enumerator_last empty-on-enumerators-state)) => :no-stack-item
+  (top-item :exec (execute-instruction 'enumerator_last empty-on-enumerators-state)) => :no-stack-item 
+  )
