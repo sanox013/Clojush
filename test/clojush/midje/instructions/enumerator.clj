@@ -64,3 +64,25 @@
 (fact "enumerator_rewind should actively change the pointer"
   (:pointer (top-item :exec (execute-instruction 'enumerator_rewind advanced-counter-on-enumerators-state))) =>  0
   )
+
+;;
+;; enumerator_ff
+;;
+
+(fact "enumerator_ff should move the :enumerator with pointer->max onto the :exec stack"
+  (enum/enumerator? (top-item :exec (execute-instruction 'enumerator_ff counter-on-enumerators-state))) =>  truthy 
+  (:pointer (top-item :exec (execute-instruction 'enumerator_ff counter-on-enumerators-state))) =>  4 
+  (count (:enumerator (execute-instruction 'enumerator_ff counter-on-enumerators-state))) =>  0 
+  )
+
+;;
+;; enumerator_first
+;;
+
+(facts "enumerator_first should move the :enumerator with pointer->0 onto the :exec stack, above its first item"
+  (enum/enumerator? (top-item :exec (execute-instruction 'enumerator_first counter-on-enumerators-state))) =>  truthy 
+  (count (:exec (execute-instruction 'enumerator_first counter-on-enumerators-state))) =>  2
+  (stack-ref :exec 1 (execute-instruction 'enumerator_first counter-on-enumerators-state)) =>  1
+  (:pointer (top-item :exec (execute-instruction 'enumerator_first counter-on-enumerators-state))) =>  0
+  (count (:enumerator (execute-instruction 'enumerator_first counter-on-enumerators-state))) =>  0 
+  )

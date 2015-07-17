@@ -52,3 +52,29 @@
             popped-state (pop-item :enumerator state)]
       (push-item (enum/new-enumerator old-seq) :exec popped-state))
     state)))
+
+(define-registered
+  enumerator_ff
+  ^{:stack-types [:enumerator :exec]}
+  (fn [state]
+    (if (not (empty? (:enumerator state)))
+      (let [old-seq (:collection (top-item :enumerator state))
+            popped-state (pop-item :enumerator state)]
+      (push-item (enum/construct-enumerator old-seq (- (count old-seq) 1)) :exec popped-state))
+    state)))
+
+(define-registered
+  enumerator_first
+  ^{:stack-types [:enumerator :exec]}
+  (fn [state]
+    (if (not (empty? (:enumerator state)))
+      (let [old-seq (:collection (top-item :enumerator state))
+            popped-state (pop-item :enumerator state)]
+      (push-item 
+        (enum/new-enumerator old-seq)
+        :exec
+        (push-item 
+          (first old-seq)
+          :exec
+          popped-state)))
+    state)))
