@@ -138,3 +138,38 @@
         (if (and (not (empty? old-seq)) (not done))
           (push-item (enum/construct-enumerator old-seq (dec old-ptr)) :enumerator popped-state)))
     state)))
+
+
+(define-registered
+  enumerator_next
+  ^{:stack-types [:enumerator :exec]}
+  (fn [state]
+    (if (not (empty? (:enumerator state)))
+      (let [old-state (top-item :enumerator state)
+            old-seq (:collection old-state)
+            old-ptr (:pointer old-state)
+            done (>= (inc old-ptr) (count old-seq))
+            popped-state (pop-item :enumerator state)]
+        (if (not (empty? old-seq))
+          (let [state-with-item (push-item (nth old-seq old-ptr) :exec popped-state)]
+            (if (not done)
+              (push-item (enum/construct-enumerator old-seq (inc old-ptr)) :enumerator state-with-item)
+              state-with-item))))
+    state)))
+
+(define-registered
+  enumerator_prev
+  ^{:stack-types [:enumerator :exec]}
+  (fn [state]
+    (if (not (empty? (:enumerator state)))
+      (let [old-state (top-item :enumerator state)
+            old-seq (:collection old-state)
+            old-ptr (:pointer old-state)
+            done (< (dec old-ptr) 0)
+            popped-state (pop-item :enumerator state)]
+        (if (not (empty? old-seq))
+          (let [state-with-item (push-item (nth old-seq old-ptr) :exec popped-state)]
+            (if (not done)
+              (push-item (enum/construct-enumerator old-seq (dec old-ptr)) :enumerator state-with-item)
+              state-with-item))))
+    state)))
