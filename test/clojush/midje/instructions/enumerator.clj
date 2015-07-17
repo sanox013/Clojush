@@ -10,15 +10,18 @@
   (:require [clojush.types.enumerator :as enum])
   (:use midje.sweet
         [clojush pushstate interpreter]
-        clojush.instructions.enumerator))
+        clojush.instructions.enumerator
+        clojush.instructions.vectors))
 
 
 ;; some fixtures to use below
 ;;
 (def counter (enum/construct-enumerator [1 2 3 4 5] 0))
+(def empty-enum (enum/construct-enumerator [] 0))
 (def counter-on-exec-state (push-item counter :exec (make-push-state)))
 (def counter-on-enumerators-state (push-item counter :enumerator (make-push-state)))
 (def vi-state (push-state-from-stacks :vector_integer '([1 2 3 4 5])))
+
 
 
 ;;
