@@ -32,6 +32,10 @@
   (:pointer (enum/new-enumerator [1 2])) => 0
   )
 
+(fact "an enumerator can be constructed from an empty seq"
+  (:collection (enum/new-enumerator '[])) => []
+  (:pointer (enum/new-enumerator '[])) => 0
+  )
 
 ;; some fixtures to use below
 ;;

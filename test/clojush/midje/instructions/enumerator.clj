@@ -17,11 +17,12 @@
 ;; some fixtures to use below
 ;;
 (def counter (enum/construct-enumerator [1 2 3 4 5] 0))
-(def empty-enum (enum/construct-enumerator [] 0))
 (def counter-on-exec-state (push-item counter :exec (make-push-state)))
+(def empty-enum (enum/construct-enumerator '[] 0))
+(def empty-on-vector-state (push-item '[] :vector_integer (make-push-state)))
 (def counter-on-enumerators-state (push-item counter :enumerator (make-push-state)))
 (def vi-state (push-state-from-stacks :vector_integer '([1 2 3 4 5])))
-
+(def empty-on-enumerators-state (push-item (enum/new-enumerator []) :enumerator (make-push-state)))
 
 
 ;;
@@ -41,6 +42,10 @@
 
 (fact "the created enumerator should have pointer set to 0"
   (:pointer (first (:enumerator (execute-instruction 'enumerator_from_vector_integer vi-state)))) => 0
+  )
+
+(fact "no enumerator is created from an empty vector" 
+  (top-item :enumerator (execute-instruction 'enumerator_from_vector_integer empty-on-vector-state)) => :no-stack-item 
   )
 
 ;;
@@ -68,6 +73,12 @@
   (:pointer (top-item :exec (execute-instruction 'enumerator_rewind advanced-counter-on-enumerators-state))) =>  0
   )
 
+(fact "the enumerator is destroyed if it is empty" 
+  (top-item :exec (execute-instruction 'enumerator_rewind empty-on-enumerators-state)) => :no-stack-item 
+  (top-item :enumerator (execute-instruction 'enumerator_rewind empty-on-enumerators-state)) => :no-stack-item 
+  )
+
+
 ;;
 ;; enumerator_ff
 ;;
@@ -76,6 +87,11 @@
   (enum/enumerator? (top-item :exec (execute-instruction 'enumerator_ff counter-on-enumerators-state))) =>  truthy 
   (:pointer (top-item :exec (execute-instruction 'enumerator_ff counter-on-enumerators-state))) =>  4 
   (count (:enumerator (execute-instruction 'enumerator_ff counter-on-enumerators-state))) =>  0 
+  )
+
+(fact "the enumerator is destroyed if it is empty" 
+  (top-item :exec (execute-instruction 'enumerator_ff empty-on-enumerators-state)) => :no-stack-item 
+  (top-item :enumerator (execute-instruction 'enumerator_ff empty-on-enumerators-state)) => :no-stack-item 
   )
 
 ;;
@@ -88,4 +104,9 @@
   (stack-ref :exec 1 (execute-instruction 'enumerator_first counter-on-enumerators-state)) =>  1
   (:pointer (top-item :exec (execute-instruction 'enumerator_first counter-on-enumerators-state))) =>  0
   (count (:enumerator (execute-instruction 'enumerator_first counter-on-enumerators-state))) =>  0 
+  )
+
+(fact "the enumerator is destroyed if it is empty" 
+  (top-item :exec (execute-instruction 'enumerator_first empty-on-enumerators-state)) => :no-stack-item 
+  (top-item :enumerator (execute-instruction 'enumerator_first empty-on-enumerators-state)) => :no-stack-item 
   )

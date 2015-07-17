@@ -27,11 +27,14 @@
   ^{:stack-types [:vector_integer :enumerator]}
   (fn [state]
     (if (not (empty? (:vector_integer state)))
-      (let [collection (first (:vector_integer state))]
-      (push-item (enum/new-enumerator collection)
-        :enumerator
-        (pop-item :vector_integer state)))
+      (let [collection (first (:vector_integer state))
+            popped-state (pop-item :vector_integer state)]
+        (if (not (empty? collection))
+          (push-item (enum/new-enumerator collection)
+          :enumerator
+          popped-state)))
       state)))
+
 
 (define-registered
   enumerator_unwrap
@@ -43,6 +46,7 @@
       (push-item  old-seq :exec popped-state))
     state)))
 
+
 (define-registered
   enumerator_rewind
   ^{:stack-types [:enumerator :exec]}
@@ -50,8 +54,10 @@
     (if (not (empty? (:enumerator state)))
       (let [old-seq (:collection (top-item :enumerator state))
             popped-state (pop-item :enumerator state)]
-      (push-item (enum/new-enumerator old-seq) :exec popped-state))
+        (if (not (empty? old-seq))
+          (push-item (enum/new-enumerator old-seq) :exec popped-state)))
     state)))
+
 
 (define-registered
   enumerator_ff
@@ -60,8 +66,10 @@
     (if (not (empty? (:enumerator state)))
       (let [old-seq (:collection (top-item :enumerator state))
             popped-state (pop-item :enumerator state)]
-      (push-item (enum/construct-enumerator old-seq (- (count old-seq) 1)) :exec popped-state))
+        (if (not (empty? old-seq))
+          (push-item (enum/construct-enumerator old-seq (- (count old-seq) 1)) :exec popped-state)))
     state)))
+
 
 (define-registered
   enumerator_first
@@ -70,11 +78,12 @@
     (if (not (empty? (:enumerator state)))
       (let [old-seq (:collection (top-item :enumerator state))
             popped-state (pop-item :enumerator state)]
-      (push-item 
-        (enum/new-enumerator old-seq)
-        :exec
-        (push-item 
-          (first old-seq)
-          :exec
-          popped-state)))
+        (if (not (empty? old-seq))
+          (push-item 
+            (enum/new-enumerator old-seq)
+            :exec
+            (push-item 
+              (first old-seq)
+              :exec
+              popped-state))))
     state)))
