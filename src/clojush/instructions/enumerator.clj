@@ -3,14 +3,11 @@
 ;; Bill Tozier, bill@vagueinnovation.com, 2015
 
 (ns clojush.instructions.enumerator
+  (:require [clojush.types.enumerator :as enum])
   (:use [clojush.pushstate]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Instructions for Enumerators
-;;
-;; an Enumerator is a simple Clojure record containing
-;;   - an immutable seq (list, vector, map, string, etc)
-;;   - a pointer variable, an integer, which indicates which item is "current"
 ;;
 ;; Rules of thumb:
 ;; 
@@ -24,20 +21,25 @@
 ;; and the loop? state.
 ;;
 
-(defrecord Enumerator [collection pointer])
-
-;; because defrecord trying to cross namespaces is awful
-(defn make-enumerator [contents pointer] 
-  (Enumerator. contents pointer))
-
 
 (define-registered
   enumerator_from_vector_integer
   ^{:stack-types [:vector_integer :enumerator]}
   (fn [state]
     (if (not (empty? (:vector_integer state)))
-      (let [collection (first (:vector_integer state)) pointer 0]
-      (push-item (make-enumerator collection pointer)
-                 :enumerator
-                 (pop-item :vector_integer state)))
+      (let [collection (first (:vector_integer state))]
+      (push-item (enum/new-enumerator collection)
+        :enumerator
+        (pop-item :vector_integer state)))
       state)))
+
+(define-registered
+  enumerator_unwrap
+  ^{:stack-types [:enumerator :exec]}
+  (fn [state]
+    (if (not (empty? (:enumerator state)))
+      (let [old-seq (:collection (top-item :enumerator state))
+            popped-state (pop-item :enumerator state)]
+      (push-item  old-seq :exec popped-state))
+    state)))
+

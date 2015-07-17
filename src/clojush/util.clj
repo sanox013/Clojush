@@ -3,7 +3,8 @@
   (:require [clojure.math.numeric-tower :as math]
             [clojure.zip :as zip]
             [clojure.walk :as walk]
-            [clojure.string :as string]))
+            [clojure.string :as string]
+            [clojush.types.enumerator :as enum]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; utilities
@@ -19,6 +20,7 @@
      :vector_float (fn [thing] (and (vector? thing) (float? (first thing))))
      :vector_string (fn [thing] (and (vector? thing) (string? (first thing))))
      :vector_boolean (fn [thing] (and (vector? thing) (or (= (first thing) true) (= (first thing) false))))
+     :enumerator enum/enumerator?
      }))
 
 (defn recognize-literal
