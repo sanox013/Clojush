@@ -38,6 +38,10 @@
   )
 
 
+;; enumerator_from_vector_integer
+;; consumes a vector_integer to make an enumerator with pointer 0
+;; discards an empty vector
+;;
 (define-registered
   enumerator_from_vector_integer
   ^{:stack-types [:vector_integer :enumerator]}
@@ -46,12 +50,19 @@
       (let [collection (first (:vector_integer state))
             popped-state (pop-item :vector_integer state)]
         (if (not (empty? collection))
-          (push-item (enum/new-enumerator collection)
-          :enumerator
-          popped-state)))
+          (push-item 
+            (enum/new-enumerator collection)
+            :enumerator
+            popped-state)
+          popped-state))
       state)))
 
 
+
+;; enumerator_unwrap
+;; consumes an enumerator to push its :collection onto the :exec stack
+;; discards an empty enumerator (edge case)
+;;
 (define-registered
   enumerator_unwrap
   ^{:stack-types [:enumerator :exec]}
@@ -60,10 +71,18 @@
       (let [old-seq (:collection (top-item :enumerator state))
             popped-state (pop-item :enumerator state)]
         (if (not (empty? old-seq))
-          (push-item  old-seq :exec popped-state)))
+          (push-item
+            old-seq
+            :exec
+            popped-state)
+          popped-state))
     state)))
 
 
+;; enumerator_rewind
+;; changes the pointer of the top enumerator to 0
+;; discards an empty enumerator (edge case)
+;;
 (define-registered
   enumerator_rewind
   ^{:stack-types [:enumerator]}
@@ -72,10 +91,18 @@
       (let [old-seq (:collection (top-item :enumerator state))
             popped-state (pop-item :enumerator state)]
         (if (not (empty? old-seq))
-          (push-item (enum/new-enumerator old-seq) :enumerator popped-state)))
+          (push-item
+            (enum/new-enumerator old-seq) 
+            :enumerator
+            popped-state)
+          popped-state))
     state)))
 
 
+;; enumerator_ff
+;; changes the pointer of the top enumerator to the last position (length - 1)
+;; discards an empty enumerator (edge case)
+;;
 (define-registered
   enumerator_ff
   ^{:stack-types [:enumerator :exec]}
@@ -84,10 +111,18 @@
       (let [old-seq (:collection (top-item :enumerator state))
             popped-state (pop-item :enumerator state)]
         (if (not (empty? old-seq))
-          (push-item (enum/construct-enumerator old-seq (dec (count old-seq))) :enumerator popped-state)))
+          (push-item 
+            (enum/construct-enumerator old-seq (dec (count old-seq)))
+            :enumerator
+            popped-state)
+          popped-state))
     state)))
 
 
+;; enumerator_first
+;; changes the pointer of the top enumerator to 0 & pushes its first item to :exec
+;; discards an empty enumerator (edge case)
+;;
 (define-registered
   enumerator_first
   ^{:stack-types [:enumerator :exec]}
@@ -102,10 +137,15 @@
             (push-item 
               (first old-seq)
               :exec
-              popped-state))))
+              popped-state))
+          popped-state))
       state)))
 
 
+;; enumerator_last
+;; changes the pointer of the top enumerator to its max & pushes its last item to :exec
+;; discards an empty enumerator (edge case)
+;;
 (define-registered
   enumerator_last
   ^{:stack-types [:enumerator :exec]}
@@ -120,10 +160,16 @@
             (push-item 
               (last old-seq)
               :exec
-              popped-state))))
+              popped-state))
+          popped-state))
       state)))
 
 
+;; enumerator_forward
+;; increments the top enumerator's pointer by 1
+;; discards it if the pointer value exceeds the max (length - 1) 
+;; discards an empty enumerator (edge case)
+;;
 (define-registered
   enumerator_forward
   ^{:stack-types [:enumerator]}
@@ -135,10 +181,19 @@
             done (>= (inc old-ptr) (count old-seq))
             popped-state (pop-item :enumerator state)]
         (if (and (not (empty? old-seq)) (not done))
-          (push-item (enum/construct-enumerator old-seq (inc old-ptr)) :enumerator popped-state)))
+          (push-item
+            (enum/construct-enumerator old-seq (inc old-ptr))
+            :enumerator
+            popped-state)
+          popped-state))
       state)))
 
 
+;; enumerator_backward
+;; decrements the top enumerator's pointer by 1
+;; discards it if the pointer falls below 0 
+;; discards an empty enumerator (edge case)
+;;
 (define-registered
   enumerator_backward
   ^{:stack-types [:enumerator]}
@@ -150,10 +205,20 @@
             done (neg? (dec old-ptr))
             popped-state (pop-item :enumerator state)]
         (if (and (not (empty? old-seq)) (not done))
-          (push-item (enum/construct-enumerator old-seq (dec old-ptr)) :enumerator popped-state)))
+          (push-item
+            (enum/construct-enumerator old-seq (dec old-ptr))
+            :enumerator
+            popped-state)
+          popped-state))
     state)))
 
 
+;; enumerator_next
+;; pushes the item at the pointer position onto :exec
+;; increments the pointer by 1
+;; discards the enumerator if the pointer value exceeds the max (length - 1) 
+;; discards an empty enumerator (edge case)
+;;
 (define-registered
   enumerator_next
   ^{:stack-types [:enumerator :exec]}
@@ -167,10 +232,21 @@
         (if (not (empty? old-seq))
           (let [state-with-item (push-item (nth old-seq old-ptr) :exec popped-state)]
             (if (not done)
-              (push-item (enum/construct-enumerator old-seq (inc old-ptr)) :enumerator state-with-item)
-              state-with-item))))
+              (push-item
+                (enum/construct-enumerator old-seq (inc old-ptr))
+                :enumerator
+                state-with-item)
+              state-with-item))
+          popped-state))
     state)))
 
+
+;; enumerator_prev
+;; pushes the item at the pointer position onto :exec
+;; decrements the pointer by 1
+;; discards the enumerator if the pointer value falls below 0 
+;; discards an empty enumerator (edge case)
+;;
 (define-registered
   enumerator_prev
   ^{:stack-types [:enumerator :exec]}
@@ -184,6 +260,10 @@
         (if (not (empty? old-seq))
           (let [state-with-item (push-item (nth old-seq old-ptr) :exec popped-state)]
             (if (not done)
-              (push-item (enum/construct-enumerator old-seq (dec old-ptr)) :enumerator state-with-item)
-              state-with-item))))
+              (push-item
+                (enum/construct-enumerator old-seq (dec old-ptr))
+                :enumerator
+                state-with-item)
+              state-with-item))
+          popped-state))
     state)))
