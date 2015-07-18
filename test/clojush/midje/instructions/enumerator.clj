@@ -308,3 +308,22 @@
   (top-item :enumerator (safe-execute 'enumerator_prev counter-on-enumerators-state)) => :no-stack-item
   (top-item :exec (safe-execute 'enumerator_prev counter-on-enumerators-state)) => 2
   )
+
+
+;;
+;; enumerator_set
+;;
+
+(def resetting-counter-state (apply-patch advanced-counter-on-enumerators-state :integer [2 -12 9812]))
+
+(facts "enumerator_set should take an :integer, and change the pointer to that value, with bounds checking"
+  (:integer resetting-counter-state) => (just 2 -12 9812)
+  (:pointer (top-item :enumerator resetting-counter-state)) => 3
+  (:pointer (top-item :enumerator (safe-execute 'enumerator_set resetting-counter-state))) => 2
+  (count (:integer (run-push '(integer_pop enumerator_set) resetting-counter-state))) => 1
+  (count (:enumerator (run-push '(integer_pop enumerator_set) resetting-counter-state))) => 0
+
+  (count (:integer (run-push '(integer_pop integer_pop enumerator_set) resetting-counter-state))) => 0
+  (count (:enumerator (run-push '(integer_pop integer_pop  enumerator_set) resetting-counter-state))) => 0
+  )
+

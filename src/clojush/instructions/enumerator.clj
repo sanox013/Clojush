@@ -260,3 +260,26 @@
               state-with-item))
           popped-state))
     state)))
+
+
+;; enumerator_set
+;; takes an :integer and sets the top :enumerator pointer to that value
+;; discards the enumerator if the pointer value falls below 0 
+;; discards the enumerator if the pointer value exceeds the max 
+;; discards an empty enumerator (edge case)
+;;
+(define-registered
+  enumerator_set
+  ^{:stack-types [:enumerator :integer]}
+  (fn [state]
+    (if (contains-at-least? state :enumerator 1 :integer 1)
+      (let [old-seq (:collection (top-item :enumerator state))
+            new-ptr (top-item :integer state)
+            popped-state (pop-item :enumerator (pop-item :integer state))]
+        (if (not (empty? old-seq))
+          (if (and (not (neg? new-ptr)) 
+                   (< new-ptr (count old-seq)))
+            (push-item (enum/construct-enumerator old-seq new-ptr) :enumerator popped-state)
+            popped-state)
+          popped-state))
+    state)))
