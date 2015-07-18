@@ -35,9 +35,9 @@
   :exec '(integer_add))) 
 
 (facts "contains-at-least? indicates that at least the specified number of items are present on the stacks of a state"
-  (contains-at-least? make-push-state :integer 0) => truthy
-  (contains-at-least? make-push-state :boolean 0) => truthy
-  (contains-at-least? make-push-state :boolean 1912) => falsey
+  (contains-at-least? (make-push-state) :integer 0) => truthy
+  (contains-at-least? (make-push-state) :boolean 0) => truthy
+  (contains-at-least? (make-push-state) :boolean 1912) => falsey
 
   (contains-at-least? busy-state :integer 3) => truthy
   (contains-at-least? busy-state :integer 4) => falsey
@@ -49,6 +49,35 @@
   (contains-at-least? busy-state :exec 2) => falsey
   (contains-at-least? busy-state :vector_foo 2) => falsey
 )
+
+;;
+;; test apply-patch helper
+;;
+
+(facts "apply-patch adds new items to the top of the indicated stack"
+  (:integer (apply-patch (make-push-state) :integer [1 10 2 11 3 12])) => (just 1 10 2 11 3 12)
+  (:integer busy-state) => (just 9 9 -1)
+  (:integer (apply-patch busy-state :integer [0 1 2])) => (just 0 1 2 9 9 -1)
+  (:vector_integer (apply-patch (make-push-state) :vector_integer [[1 2] [3 4]])) => (just [1 2] [3 4])
+  )
+
+(facts "apply-patch can work with calculated values"
+  (:integer (apply-patch busy-state :integer [(+ 2 3) (- 9 2)])) => (just 5 7 9 9 -1)
+)
+;;
+;; test apply-patches helper
+;;
+
+(facts "apply-patches adds new items to the tops of all indicated stacks"
+  (:integer (apply-patches (make-push-state))) => nil
+  (:integer (apply-patches (make-push-state) :integer [1 2 3])) => (just 1 2 3)
+  (:integer (apply-patches (make-push-state) :integer [1 2 3] :boolean [false true])) => (just 1 2 3)
+  (:boolean (apply-patches (make-push-state) :integer [1 2 3] :boolean [false true])) => (just false true)
+
+  (:integer (apply-patches busy-state)) => (just 9 9 -1)
+  (:integer (apply-patches busy-state :integer [4 3 2])) => (just 4 3 2 9 9 -1)
+  (:float (apply-patches busy-state :float [4.3 2.1])) => (just 4.3 2.1)
+  )
 
 
 ;;
@@ -65,6 +94,7 @@
     (if (not (is-valid-state? result))
       (throw (Exception. "instruction returned invalid push-state"))
       result)))
+
 
 ;;
 ;; enumerator_from_vector_integer

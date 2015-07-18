@@ -37,6 +37,21 @@
     prerequisites)
   )
 
+(defn apply-patch
+  "Returns a new state with the indicated 'patch' pushed onto the top of the indicated stack"
+  [state stack new-top]
+  (assoc state stack (concat new-top (stack state)))
+  )
+
+(defn apply-patches
+  "Returns a new state with all of the indicated 'patches' pushed onto the tops of the indicated stacks"
+  [state & {:as patches}]
+  (reduce-kv
+    (fn [s stack new-top]
+        (assoc s stack (concat new-top (stack s))))
+    state
+    patches
+  ))
 
 ;; enumerator_from_vector_integer
 ;; consumes a vector_integer to make an enumerator with pointer 0
@@ -50,10 +65,7 @@
       (let [collection (first (:vector_integer state))
             popped-state (pop-item :vector_integer state)]
         (if (not (empty? collection))
-          (push-item 
-            (enum/new-enumerator collection)
-            :enumerator
-            popped-state)
+          (push-item (enum/new-enumerator collection) :enumerator popped-state)
           popped-state))
       state)))
 
@@ -71,10 +83,7 @@
       (let [old-seq (:collection (top-item :enumerator state))
             popped-state (pop-item :enumerator state)]
         (if (not (empty? old-seq))
-          (push-item
-            old-seq
-            :exec
-            popped-state)
+          (push-item old-seq :exec popped-state)
           popped-state))
     state)))
 
@@ -91,10 +100,7 @@
       (let [old-seq (:collection (top-item :enumerator state))
             popped-state (pop-item :enumerator state)]
         (if (not (empty? old-seq))
-          (push-item
-            (enum/new-enumerator old-seq) 
-            :enumerator
-            popped-state)
+          (push-item (enum/new-enumerator old-seq) :enumerator popped-state)
           popped-state))
     state)))
 
@@ -111,10 +117,7 @@
       (let [old-seq (:collection (top-item :enumerator state))
             popped-state (pop-item :enumerator state)]
         (if (not (empty? old-seq))
-          (push-item 
-            (enum/construct-enumerator old-seq (dec (count old-seq)))
-            :enumerator
-            popped-state)
+          (push-item (enum/construct-enumerator old-seq (dec (count old-seq))) :enumerator popped-state)
           popped-state))
     state)))
 
@@ -131,13 +134,9 @@
       (let [old-seq (:collection (top-item :enumerator state))
             popped-state (pop-item :enumerator state)]
         (if (not (empty? old-seq))
-          (push-item 
-            (enum/new-enumerator old-seq)
-            :enumerator
-            (push-item 
-              (first old-seq)
-              :exec
-              popped-state))
+          (apply-patches popped-state
+            :exec [(first old-seq)] 
+            :enumerator [(enum/new-enumerator old-seq)])
           popped-state))
       state)))
 
@@ -154,13 +153,10 @@
       (let [old-seq (:collection (top-item :enumerator state))
             popped-state (pop-item :enumerator state)]
         (if (not (empty? old-seq))
-          (push-item 
-            (enum/construct-enumerator old-seq (dec (count old-seq)))
-            :enumerator
-            (push-item 
-              (last old-seq)
-              :exec
-              popped-state))
+          (apply-patches 
+            popped-state
+            :enumerator [(enum/construct-enumerator old-seq (dec (count old-seq)))]
+            :exec [(last old-seq)])
           popped-state))
       state)))
 
@@ -181,10 +177,9 @@
             done (>= (inc old-ptr) (count old-seq))
             popped-state (pop-item :enumerator state)]
         (if (and (not (empty? old-seq)) (not done))
-          (push-item
-            (enum/construct-enumerator old-seq (inc old-ptr))
-            :enumerator
-            popped-state)
+          (push-item (enum/construct-enumerator old-seq (inc old-ptr))
+                     :enumerator
+                     popped-state)
           popped-state))
       state)))
 
@@ -205,10 +200,9 @@
             done (neg? (dec old-ptr))
             popped-state (pop-item :enumerator state)]
         (if (and (not (empty? old-seq)) (not done))
-          (push-item
-            (enum/construct-enumerator old-seq (dec old-ptr))
-            :enumerator
-            popped-state)
+          (push-item (enum/construct-enumerator old-seq (dec old-ptr))
+                     :enumerator
+                     popped-state)
           popped-state))
     state)))
 
@@ -232,8 +226,7 @@
         (if (not (empty? old-seq))
           (let [state-with-item (push-item (nth old-seq old-ptr) :exec popped-state)]
             (if (not done)
-              (push-item
-                (enum/construct-enumerator old-seq (inc old-ptr))
+              (push-item (enum/construct-enumerator old-seq (inc old-ptr))
                 :enumerator
                 state-with-item)
               state-with-item))
