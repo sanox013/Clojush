@@ -73,7 +73,7 @@
 
 ;; enumerator_unwrap
 ;; consumes an enumerator to push its :collection onto the :exec stack
-;; discards an empty enumerator (edge case)
+;; discards an empty enumerator
 ;;
 (define-registered
   enumerator_unwrap
@@ -90,7 +90,7 @@
 
 ;; enumerator_rewind
 ;; changes the pointer of the top enumerator to 0
-;; discards an empty enumerator (edge case)
+;; discards an empty enumerator
 ;;
 (define-registered
   enumerator_rewind
@@ -107,7 +107,7 @@
 
 ;; enumerator_ff
 ;; changes the pointer of the top enumerator to the last position (length - 1)
-;; discards an empty enumerator (edge case)
+;; discards an empty enumerator
 ;;
 (define-registered
   enumerator_ff
@@ -124,7 +124,7 @@
 
 ;; enumerator_first
 ;; changes the pointer of the top enumerator to 0 & pushes its first item to :exec
-;; discards an empty enumerator (edge case)
+;; discards an empty enumerator
 ;;
 (define-registered
   enumerator_first
@@ -143,7 +143,7 @@
 
 ;; enumerator_last
 ;; changes the pointer of the top enumerator to its max & pushes its last item to :exec
-;; discards an empty enumerator (edge case)
+;; discards an empty enumerator
 ;;
 (define-registered
   enumerator_last
@@ -164,7 +164,7 @@
 ;; enumerator_forward
 ;; increments the top enumerator's pointer by 1
 ;; discards it if the pointer value exceeds the max (length - 1) 
-;; discards an empty enumerator (edge case)
+;; discards an empty enumerator
 ;;
 (define-registered
   enumerator_forward
@@ -187,7 +187,7 @@
 ;; enumerator_backward
 ;; decrements the top enumerator's pointer by 1
 ;; discards it if the pointer falls below 0 
-;; discards an empty enumerator (edge case)
+;; discards an empty enumerator
 ;;
 (define-registered
   enumerator_backward
@@ -211,7 +211,7 @@
 ;; pushes the item at the pointer position onto :exec
 ;; increments the pointer by 1
 ;; discards the enumerator if the pointer value exceeds the max (length - 1) 
-;; discards an empty enumerator (edge case)
+;; discards an empty enumerator
 ;;
 (define-registered
   enumerator_next
@@ -238,7 +238,7 @@
 ;; pushes the item at the pointer position onto :exec
 ;; decrements the pointer by 1
 ;; discards the enumerator if the pointer value falls below 0 
-;; discards an empty enumerator (edge case)
+;; discards an empty enumerator
 ;;
 (define-registered
   enumerator_prev
@@ -266,7 +266,7 @@
 ;; takes an :integer and sets the top :enumerator pointer to that value
 ;; discards the enumerator if the pointer value falls below 0 
 ;; discards the enumerator if the pointer value exceeds the max 
-;; discards an empty enumerator (edge case)
+;; discards an empty enumerator
 ;;
 (define-registered
   enumerator_set
@@ -286,7 +286,7 @@
 
 
 ;; enumerator_map_code
-;; discards an empty enumerator (edge case)
+;; discards an empty enumerator
 ;; pushes a copy of the instruction onto :exec
 ;; pushes a copy of the top :code item onto :exec
 ;; pushes the current item in the enumerator onto :exec
@@ -315,7 +315,7 @@
 
 
 ;; enumerator_map_exec
-;; discards an empty enumerator (edge case)
+;; discards an empty enumerator
 ;; discards the enumerator and the top :exec item if the pointer value exceeds its max 
 ;; pops the next item on :exec
 ;; if not finished, pushes one copy of the popped :exec item back on :exec
@@ -339,5 +339,64 @@
             (apply-patches popped-state 
               :exec [(nth old-seq old-ptr) what-is-mapped 'enumerator_map_exec what-is-mapped]
               :enumerator [(enum/construct-enumerator old-seq (inc old-ptr))])
+            popped-state))
+    state)))
+
+
+;; enumerator_apply_exec
+;; discards an empty enumerator
+;; pops the next item on :exec
+;; discards the enumerator if the pointer value exceeds its max 
+;; pushes 'enumerator_apply_exec onto :exec
+;; pushes popped :exec item back on :exec
+;; pushes the current item in the enumerator onto :exec
+;; advances the enumerator pointer
+;;
+(define-registered
+  enumerator_apply_exec
+  ^{:stack-types [:exec :enumerator]}
+  (fn [state]
+    (if (contains-at-least? state :enumerator 1 :exec 1)
+      (let [old-enum (top-item :enumerator state)
+            old-seq (:collection old-enum)
+            old-ptr (:pointer old-enum)
+            what-is-mapped (top-item :exec state)
+            popped-state (pop-item :exec (pop-item :enumerator state))
+            done (> (inc old-ptr) (count old-seq))]
+        (if (and (not (empty? old-seq)) (not done))
+            (apply-patches popped-state 
+              :exec [(nth old-seq old-ptr) what-is-mapped 'enumerator_apply_exec]
+              :enumerator [(enum/construct-enumerator old-seq (inc old-ptr))])
+            popped-state))
+    state)))
+
+
+
+;; enumerator_apply_code
+;; discards an empty enumerator
+;; pops the next item on :code
+;; discards the enumerator and :code item if the pointer value exceeds its max 
+;; pushes a copy of the :code item on to :exec
+;; pushes 'enumerator_apply_code onto :exec
+;; pushes popped :code item back on :code
+;; pushes the current item in the enumerator onto :exec
+;; advances the enumerator pointer
+;;
+(define-registered
+  enumerator_apply_code
+  ^{:stack-types [:code :enumerator]}
+  (fn [state]
+    (if (contains-at-least? state :enumerator 1 :code 1)
+      (let [old-enum (top-item :enumerator state)
+            old-seq (:collection old-enum)
+            old-ptr (:pointer old-enum)
+            what-is-mapped (top-item :code state)
+            popped-state (pop-item :code (pop-item :enumerator state))
+            done (> (inc old-ptr) (count old-seq))]
+        (if (and (not (empty? old-seq)) (not done))
+            (apply-patches popped-state 
+              :exec [(nth old-seq old-ptr) what-is-mapped 'enumerator_apply_code]
+              :enumerator [(enum/construct-enumerator old-seq (inc old-ptr))]
+              :code [what-is-mapped])
             popped-state))
     state)))

@@ -409,3 +409,71 @@
     ;; int:(26 16 0 0 0 0 0 0) exec:(9 false) ptr:()
     ;; int:(9 26 16 0 0 0 0 0 0) exec:(false) ptr:()
     ;; int:(9 26 16 0 0 0 0 0 0) exec:() ptr:()
+
+
+;;
+;; enumerator_apply_exec
+;;
+
+(def exec-applying-state (apply-patches advanced-counter-on-enumerators-state 
+  :integer [1 1 1 1 1 1]
+  :exec [7 'integer_add 'integer_stackdepth 0 0 0]))
+
+(fact "enumerator_apply_exec should advance the enumerator counter, with bounds checking"
+  (:pointer (top-item :enumerator (safe-execute 'enumerator_apply_exec exec-applying-state))) => 4
+  )
+
+(fact "enumerator_apply_exec should put the expected values onto the :exec stack"
+  (:exec (safe-execute 'enumerator_apply_exec exec-applying-state)) => 
+    (just 8 7 'enumerator_apply_exec 'integer_add 'integer_stackdepth 0 0 0))
+
+(fact "enumerator_apply_exec should run until it quits"
+  (:integer (run-push '(enumerator_apply_exec) exec-applying-state)) => (just 0 0 0 20 8 1 1 1 1 1 1)
+  )
+    ;; int:(1 1 1 1 1 1)   exec:(eae 7 'integer_add 'integer_stackdepth 0 0 0) ptr:(3)
+    ;; int:(1 1 1 1 1 1)   exec:(8 7 eae 'integer_add 'integer_stackdepth 0 0 0) ptr:(4)
+    ;; int:(8 1 1 1 1 1 1)   exec:(7 eae 'integer_add 'integer_stackdepth 0 0 0) ptr:(4)
+    ;; int:(7 8 1 1 1 1 1 1)   exec:(eae 'integer_add 'integer_stackdepth 0 0 0) ptr:(4)
+    ;; int:(7 8 1 1 1 1 1 1)   exec:(13 'integer_add eae 'integer_stackdepth 0 0 0) ptr:(5)
+    ;; int:(13 7 8 1 1 1 1 1 1)   exec:('integer_add eae 'integer_stackdepth 0 0 0) ptr:(5)
+    ;; int:(20 8 1 1 1 1 1 1)   exec:(eae 'integer_stackdepth 0 0 0) ptr:(5)
+    ;; int:(20 8 1 1 1 1 1 1)   exec:(0 0 0) ptr:()  >> POOF <<
+    ;; int:(20 8 1 1 1 1 1 1)   exec:(0 0 0) ptr:() 
+    ;; ...
+    ;; int:(0 0 0 20 8 1 1 1 1 1 1)   exec:() ptr:()
+
+
+;;
+;; enumerator_apply_code
+;;
+
+(def code-applying-state (apply-patches advanced-counter-on-enumerators-state 
+  :integer [3 4 5]
+  :exec [0 0 0]
+  :code ['integer_sub 1 2 3]))
+
+(fact "enumerator_apply_code should advance the enumerator counter, with bounds checking"
+  (:pointer (top-item :enumerator (safe-execute 'enumerator_apply_code code-applying-state))) => 4
+  )
+
+(fact "enumerator_apply_code should put the expected values onto the :exec stack"
+  (:exec (safe-execute 'enumerator_apply_code code-applying-state)) => 
+    (just 8 'integer_sub 'enumerator_apply_code 0 0 0))
+
+(fact "enumerator_apply_code should only consume one :code item over the course of a 'typical' run"
+  (:code (run-push '(enumerator_apply_code) code-applying-state)) => (just 1 2 3))
+
+(fact "enumerator_apply_code should run until it quits"
+  (:integer (run-push '(enumerator_apply_code) code-applying-state)) => (just 0 0 0 -18 4 5)
+  )
+  ;; int:(3 4 5)   exec:(eac 0 0 0)  code:('integer_sub 1 2 3)  ptr:(3)
+  ;; int:(3 4 5)   exec:(8 'integer_sub 'eac 0 0 0)  code:('integer_sub 1 2 3)  ptr:(4)
+  ;; int:(8 3 4 5)   exec:('integer_sub 'eac 0 0 0)  code:('integer_sub 1 2 3)  ptr:(4)
+  ;; int:(-5 4 5)   exec:( 'eac 0 0 0)  code:('integer_sub 1 2 3)  ptr:(4)
+  ;; int:(-5 4 5)   exec:(13 'integer_sub  'eac  0 0 0)  code:('integer_sub 1 2 3)  ptr:(5)
+  ;; int:(13 -5 4 5)   exec:('integer_sub  'eac  0 0 0)  code:('integer_sub 1 2 3)  ptr:(5)
+  ;; int:(-18 4 5)   exec:('eac  0 0 0)  code:('integer_sub 1 2 3)  ptr:(5)
+  ;; int:(-18 4 5)   exec:( 0 0 0)  code:( 1 2 3)  ptr:()   >>POOF<<
+  ;; ...
+  ;; int:(0 0 0 -18 4 5)   exec:( )  code:( 1 2 3)  ptr:() 
+
