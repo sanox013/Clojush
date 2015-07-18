@@ -50,16 +50,15 @@
   (contains-at-least? busy-state :vector_foo 2) => falsey
 )
 
-; ;; sanity checks
 
-; (fact "the top-item utility function should not return :no-stack-item when passed a nil argument"
-;   (top-item :integer nil) =not=> :no-stack-item
-;   (top-item :foo make-push-state) =not=> :no-stack-item
-;   )
+;;
+;; helpers
+;;
 
 (defn is-valid-state? [state]
   (= (keys state) clojush.globals/push-types)
 )
+
 
 (defn safe-execute [instruction state]
   (let [result (execute-instruction instruction state)]
@@ -266,10 +265,8 @@
 (facts "enumerator_prev should reduce the pointer by one, and push the CURRENT item"
   (enum/enumerator? (top-item :enumerator (safe-execute 
     'enumerator_prev advanced-counter-on-enumerators-state))) =>  truthy 
-  (:pointer (top-item :enumerator (safe-execute 
-    'enumerator_prev advanced-counter-on-enumerators-state))) =>  2
-  (top-item :exec (safe-execute 
-    'enumerator_prev advanced-counter-on-enumerators-state)) =>  4
+  (:pointer (top-item :enumerator (safe-execute 'enumerator_prev advanced-counter-on-enumerators-state))) =>  2
+  (top-item :exec (safe-execute 'enumerator_prev advanced-counter-on-enumerators-state)) =>  4
   )
 
 (fact "the enumerator is destroyed if it is empty" 
