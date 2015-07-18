@@ -71,6 +71,81 @@
 
 
 
+;; enumerator_from_vector_boolean
+;; consumes a vector_boolean to make an enumerator with pointer 0
+;; discards an empty vector
+;;
+(define-registered
+  enumerator_from_vector_boolean
+  ^{:stack-types [:vector_boolean :enumerator]}
+  (fn [state]
+    (if (contains-at-least? state :vector_boolean 1)
+      (let [collection (first (:vector_boolean state))
+            popped-state (pop-item :vector_boolean state)]
+        (if (not (empty? collection))
+          (push-item (enum/new-enumerator collection) :enumerator popped-state)
+          popped-state))
+      state)))
+
+
+
+;; enumerator_from_vector_float
+;; consumes a vector_float to make an enumerator with pointer 0
+;; discards an empty vector
+;;
+(define-registered
+  enumerator_from_vector_float
+  ^{:stack-types [:vector_float :enumerator]}
+  (fn [state]
+    (if (contains-at-least? state :vector_float 1)
+      (let [collection (first (:vector_float state))
+            popped-state (pop-item :vector_float state)]
+        (if (not (empty? collection))
+          (push-item (enum/new-enumerator collection) :enumerator popped-state)
+          popped-state))
+      state)))
+
+
+
+;; enumerator_from_vector_string
+;; consumes a vector_string to make an enumerator with pointer 0
+;; discards an empty vector
+;;
+(define-registered
+  enumerator_from_vector_string
+  ^{:stack-types [:vector_string :enumerator]}
+  (fn [state]
+    (if (contains-at-least? state :vector_string 1)
+      (let [collection (first (:vector_string state))
+            popped-state (pop-item :vector_string state)]
+        (if (not (empty? collection))
+          (push-item (enum/new-enumerator collection) :enumerator popped-state)
+          popped-state))
+      state)))
+
+
+;; enumerator_from_string
+;; consumes a string to make an enumerator with pointer 0
+;; discards an empty vector
+;;
+(define-registered
+  enumerator_from_string
+  ^{:stack-types [:string :enumerator]}
+  (fn [state]
+    (if (contains-at-least? state :string 1)
+      (let [collection (first (:string state))
+            popped-state (pop-item :string state)]
+        (if (not (empty? collection))
+          (push-item (enum/new-enumerator collection) :enumerator popped-state)
+          popped-state))
+      state)))
+
+
+;;
+;; the interesting instructions:
+;;
+
+
 ;; enumerator_unwrap
 ;; consumes an enumerator to push its :collection onto the :exec stack
 ;; discards an empty enumerator

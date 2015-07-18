@@ -100,34 +100,7 @@
 
 
 
-;;
-;; enumerator_from_vector_integer
-;;
 
-(facts "the instruction enumerator_from_vector_integer should remove a :vector_integer and add a new :enumerator item"
-  (count (:vector_integer vi-state)) => 1
-  (count (:enumerator vi-state)) => 0
-  (count (:vector_integer (safe-execute 'enumerator_from_vector_integer vi-state))) => 0
-  (count (:enumerator (safe-execute 
-    'enumerator_from_vector_integer vi-state))) => 1
-  )
-
-(fact "the created item should be an Enumerator with the original vector_integer as its seq"
-  (:collection (top-item :enumerator (safe-execute 'enumerator_from_vector_integer vi-state))) => (just 1 2 3 4 5)
-  ) 
-
-(fact "the created enumerator should have pointer set to 0"
-  (:pointer (top-item :enumerator (safe-execute 'enumerator_from_vector_integer vi-state))) => 0
-  )
-
-(fact "no enumerator is created from a consumed empty vector" 
-  (top-item :enumerator (safe-execute 'enumerator_from_vector_integer empty-on-vector-state)) => :no-stack-item 
-  (top-item :vector_integer (safe-execute 'enumerator_from_vector_integer empty-on-vector-state)) => :no-stack-item 
-  )
-
-(fact "an actual push-state is returned"
-  (is-valid-state? (safe-execute 'enumerator_from_vector_integer (make-push-state))) => truthy
-)
 
 
 ;;
