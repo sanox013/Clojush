@@ -1,7 +1,8 @@
 (ns clojush.interpreter
   (:use [clojush pushstate globals util]
         [clojush.instructions tag input-output]
-        [clojush.experimental.tagged-code-macros]))
+        [clojush.experimental.tagged-code-macros]
+        [clojush.types.enumerator]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; push interpreter

@@ -11,6 +11,7 @@
   (:use midje.sweet
         [clojush pushstate interpreter]
         clojush.instructions.enumerator
+        clojush.instructions.numbers
         clojush.instructions.vectors))
 
 
@@ -373,3 +374,38 @@
       (:code (safe-execute 'enumerator_map_code
         (push-item 88 :code empty-on-enumerators-state))) => '()
   )
+
+
+;;
+;; enumerator_map_exec
+;;
+
+(def exec-mapping-state (apply-patches advanced-counter-on-enumerators-state 
+  :integer [0 0 0 0 0 0]
+  :exec ['(2 integer_mult) 9 false]))
+
+(fact "enumerator_map_exec should advance the enumerator counter, with bounds checking"
+  (:pointer (top-item :enumerator (safe-execute 'enumerator_map_exec exec-mapping-state))) => 4
+  )
+
+(fact "enumerator_map_exec should put the expected values onto the :exec stack"
+  (:exec (safe-execute 'enumerator_map_exec exec-mapping-state)) => 
+    (just 8 '(2 integer_mult) 'enumerator_map_exec '(2 integer_mult) 9 false))
+
+(fact "enumerator_map_exec should run until it quits"
+  (:integer (run-push '(enumerator_map_exec) exec-mapping-state)) => (just 9 26 16 0 0 0 0 0 0)
+  )
+    ;; int:(0 0 0 0 0 0)   exec:(emc 9 false) ptr:(3)
+    ;; int:(0 0 0 0 0 0)   exec:(8 '(2 integer_mult) 'enumerator_map_exec 9 false) ptr:(4)
+    ;; int:(8 0 0 0 0 0 0) exec:('(2 integer_mult) 'enumerator_map_exec 9 false) ptr:(4)
+    ;; int:(8 0 0 0 0 0 0) exec:(2 'integer_mult 'enumerator_map_exec 9 false) ptr:(4)
+    ;; int:(2 8 0 0 0 0 0 0) exec:('integer_mult 'enumerator_map_exec 9 false) ptr:(4)
+    ;; int:(16 0 0 0 0 0 0) exec:('enumerator_map_exec 9 false) ptr:(4)
+    ;; int:(16 0 0 0 0 0 0) exec:(13 '(2 integer_mult 9 false) 'enumerator_map_exec) ptr:(5)
+    ;; int:(13 16 0 0 0 0 0 0) exec:('(2 integer_mult 9 false) 'enumerator_map_exec) ptr:(5)
+    ;; int:(13 16 0 0 0 0 0 0) exec:(2 'integer_mult 'enumerator_map_exec 9 false) ptr:(5)
+    ;; int:(2 13 16 0 0 0 0 0 0) exec:('integer_mult 'enumerator_map_exec 9 false) ptr:(5)
+    ;; int:(26 16 0 0 0 0 0 0) exec:('enumerator_map_exec 9 false) ptr:(5)
+    ;; int:(26 16 0 0 0 0 0 0) exec:(9 false) ptr:()
+    ;; int:(9 26 16 0 0 0 0 0 0) exec:(false) ptr:()
+    ;; int:(9 26 16 0 0 0 0 0 0) exec:() ptr:()

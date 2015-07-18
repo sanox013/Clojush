@@ -44,7 +44,7 @@
 
 ;; make sure the interpreter knows what Enumerators are
 ;; 
-(fact "enumerator instances are recognized and pushed to the :enumerator stack"
+(fact "enumerator instances are recognized and pushed to the :enumerator stack from the :exec stack"
   (count (:enumerator (run-push '() counter-on-exec-state))) => 1
   (top-item :enumerator (run-push '() counter-on-exec-state)) => counter
   (count (:exec (run-push '() counter-on-exec-state))) => 0
