@@ -276,11 +276,10 @@
       (let [old-seq (:collection (top-item :enumerator state))
             new-ptr (top-item :integer state)
             popped-state (pop-item :enumerator (pop-item :integer state))]
-        (if (not (empty? old-seq))
-          (if (and (not (neg? new-ptr)) 
-                   (< new-ptr (count old-seq)))
-            (push-item (enum/construct-enumerator old-seq new-ptr) :enumerator popped-state)
-            popped-state)
+        (if (and (not (empty? old-seq))
+                 (not (neg? new-ptr)) 
+                 (< new-ptr (count old-seq)))
+          (push-item (enum/construct-enumerator old-seq new-ptr) :enumerator popped-state)
           popped-state))
     state)))
 
