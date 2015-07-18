@@ -283,3 +283,33 @@
             popped-state)
           popped-state))
     state)))
+
+
+
+;; enumerator_map_code
+;; discards an empty enumerator (edge case)
+;; pushes a copy of the instruction onto :exec
+;; pushes a copy of the top :code item onto :exec
+;; pushes the current item in the enumerator onto :exec
+;; advances the enumerator pointer
+;; discards the enumerator if the pointer value exceeds the max 
+;; pops the top :code item when it expires (but not before)
+;;
+(define-registered
+  enumerator_map_code
+  ^{:stack-types [:code :enumerator :exec]}
+  (fn [state]
+    (if (contains-at-least? state :enumerator 1 :code 1)
+      (let [old-enum (top-item :enumerator state)
+            old-seq (:collection old-enum)
+            old-ptr (:pointer old-enum)
+            the-code (top-item :code state)
+            popped-state (pop-item :code (pop-item :enumerator state))
+            done (> (inc old-ptr) (count old-seq))]
+        (if (and (not (empty? old-seq)) (not done))
+            (apply-patches popped-state 
+              :exec [(nth old-seq old-ptr) the-code 'enumerator_map_code]
+              :enumerator [(enum/construct-enumerator old-seq (inc old-ptr))]
+              :code [the-code])
+            popped-state))
+    state)))

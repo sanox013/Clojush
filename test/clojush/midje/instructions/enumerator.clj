@@ -25,6 +25,22 @@
 (def empty-on-enumerators-state (push-item (enum/new-enumerator []) :enumerator (make-push-state)))
 
 ;;
+;; some local helpers
+;;
+
+(defn is-valid-state? [state]
+  (= (keys state) clojush.globals/push-types)
+)
+
+
+(defn safe-execute [instruction state]
+  (let [result (execute-instruction instruction state)]
+    (if (not (is-valid-state? result))
+      (throw (Exception. "instruction returned invalid push-state"))
+      result)))
+
+
+;;
 ;; test contains-at-least? helper
 ;;
 
@@ -57,6 +73,8 @@
 (facts "apply-patch adds new items to the top of the indicated stack"
   (:integer (apply-patch (make-push-state) :integer [1 10 2 11 3 12])) => (just 1 10 2 11 3 12)
   (:integer busy-state) => (just 9 9 -1)
+  (:integer (safe-execute 'integer_pop busy-state)) => (just 9 -1) ;; just making top visible
+  (:integer (safe-execute 66 busy-state)) => (just 66 9 9 -1) ;; just making top visible
   (:integer (apply-patch busy-state :integer [0 1 2])) => (just 0 1 2 9 9 -1)
   (:vector_integer (apply-patch (make-push-state) :vector_integer [[1 2] [3 4]])) => (just [1 2] [3 4])
   )
@@ -79,21 +97,6 @@
   (:float (apply-patches busy-state :float [4.3 2.1])) => (just 4.3 2.1)
   )
 
-
-;;
-;; helpers
-;;
-
-(defn is-valid-state? [state]
-  (= (keys state) clojush.globals/push-types)
-)
-
-
-(defn safe-execute [instruction state]
-  (let [result (execute-instruction instruction state)]
-    (if (not (is-valid-state? result))
-      (throw (Exception. "instruction returned invalid push-state"))
-      result)))
 
 
 ;;
@@ -154,7 +157,7 @@
   (count (:enumerator (safe-execute 'enumerator_rewind counter-on-enumerators-state))) =>  1
   )
 
-(def advanced-counter-on-enumerators-state (push-item (enum/construct-enumerator [1 2 3 4 5] 3) :enumerator (make-push-state)))
+(def advanced-counter-on-enumerators-state (push-item (enum/construct-enumerator [2 3 5 8 13] 3) :enumerator (make-push-state)))
 
 (fact "enumerator_rewind should actively change the pointer"
   (:pointer (top-item :enumerator (safe-execute 'enumerator_rewind advanced-counter-on-enumerators-state))) =>  0
@@ -296,7 +299,7 @@
   (enum/enumerator? (top-item :enumerator (safe-execute 
     'enumerator_prev advanced-counter-on-enumerators-state))) =>  truthy 
   (:pointer (top-item :enumerator (safe-execute 'enumerator_prev advanced-counter-on-enumerators-state))) =>  2
-  (top-item :exec (safe-execute 'enumerator_prev advanced-counter-on-enumerators-state)) =>  4
+  (top-item :exec (safe-execute 'enumerator_prev advanced-counter-on-enumerators-state)) =>  8
   )
 
 (fact "the enumerator is destroyed if it is empty" 
@@ -327,3 +330,46 @@
   (count (:enumerator (run-push '(integer_pop integer_pop  enumerator_set) resetting-counter-state))) => 0
   )
 
+;;
+;; enumerator_map_code
+;;
+
+(def code-mapping-state (apply-patches advanced-counter-on-enumerators-state 
+  :integer [0 0 0 0 0 0]
+  :code ['(1 integer_stackdepth) 9 false]))
+
+(fact "enumerator_map_code should advance the enumerator counter, with bounds checking"
+  (:pointer (top-item :enumerator (safe-execute 'enumerator_map_code code-mapping-state))) => 4
+  )
+
+(fact "enumerator_map_code should put the expected three values onto the :exec stack"
+  (:exec (safe-execute 'enumerator_map_code code-mapping-state)) => (just 8 '(1 integer_stackdepth) 'enumerator_map_code)
+  )
+
+(facts "enumerator_map_code should still fire when the counter is maxed out"
+  (:exec (safe-execute 'enumerator_map_code (safe-execute 'enumerator_map_code code-mapping-state))) => 
+    (just 13 '(1 integer_stackdepth) 'enumerator_map_code 8 '(1 integer_stackdepth) 'enumerator_map_code)
+
+  (:integer (run-push '(enumerator_map_code) code-mapping-state)) => (just 11 1 13 8 1 8 0 0 0 0 0 0)
+    ;; int:(0 0 0 0 0 0)   exec:(emc) ptr:(3)
+    ;; int:(0 0 0 0 0 0)   exec:(8 '(1 integer_stackdepth) 'enumerator_map_code) ptr:(4)
+    ;; int:(8 0 0 0 0 0 0) exec:('(1 integer_stackdepth) 'enumerator_map_code) ptr:(4)
+    ;; int:(8 0 0 0 0 0 0) exec:(1 'integer_stackdepth 'enumerator_map_code) ptr:(4)
+    ;; int:(1 8 0 0 0 0 0 0) exec:('integer_stackdepth 'enumerator_map_code) ptr:(4)
+    ;; int:(8 1 8 0 0 0 0 0 0) exec:('enumerator_map_code) ptr:(4)
+    ;; int:(8 1 8 0 0 0 0 0 0) exec:(13 '(1 integer_stackdepth) 'enumerator_map_code) ptr:(5)
+    ;; int:(13 8 1 8 0 0 0 0 0 0) exec:('(1 integer_stackdepth) 'enumerator_map_code) ptr:(5)
+    ;; int:(13 8 1 8 0 0 0 0 0 0) exec:(1 'integer_stackdepth 'enumerator_map_code) ptr:(5)
+    ;; int:(1 13 8 1 8 0 0 0 0 0 0) exec:('integer_stackdepth 'enumerator_map_code) ptr:(5)
+    ;; int:(11 1 13 8 1 8 0 0 0 0 0 0) exec:('enumerator_map_code) ptr:(5)
+    ;; int:(11 1 13 8 1 8 0 0 0 0 0 0) exec:() ptr:()
+  )
+
+  (fact "enumerator_map_code should eliminate the top code after completing"
+      (:code (run-push '(enumerator_map_code) code-mapping-state)) => (just 9 false)
+  )
+
+  (fact "enumerator_map_code should pop the top :code item if the enumerator is empty"
+      (:code (safe-execute 'enumerator_map_code
+        (push-item 88 :code empty-on-enumerators-state))) => '()
+  )
