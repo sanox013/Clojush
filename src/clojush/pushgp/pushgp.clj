@@ -1,9 +1,11 @@
 (ns clojush.pushgp.pushgp
   (:require [clojure.java.io :as io]
             [clj-random.core :as random]
-            [clojure.repl :as repl])
+            [clojure.repl :as repl]
+            [clojush.types.enumerator :as enum])
   (:use [clojush globals util pushstate random individual evaluate simplification translate]
         [clojush.instructions boolean code common numbers random-instructions string char vectors tag zip return input-output genome]
+        clojush.instructions.enumerator
         [clojush.pushgp breed parent-selection report]
         [clojush.experimental.decimation]))
 
