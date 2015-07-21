@@ -32,9 +32,9 @@
                            (if (number? top-float)
                              (Math/abs (- top-float target))
                              1000)))))
-   :atom-generators (list (fn [] (lrand 10))
-                          'in1
-                          @registered-instructions)
+   :atom-generators (concat (list (fn [] (lrand 10))
+                                  'in1)
+                            @registered-instructions)
    :epigenetic-markers []
    :genetic-operator-probabilities {:alternation 0.8
                                     :uniform-mutation 0.2}
