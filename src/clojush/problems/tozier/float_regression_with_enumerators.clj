@@ -14,7 +14,7 @@
 ;; input instruction that uses the auxiliary stack.
 
 (def fitness-cases
-  (for [input (map float (range 10))]
+  (for [input (map float (range 30))]
     [input
      (- (* input input input) 
         (* 2.0 input input) 
@@ -25,9 +25,7 @@
                      (doall
                        (for [[input target] fitness-cases]
                          (let [state (run-push program 
-                                               (push-item input :input 
-                                                          (push-item input :float 
-                                                                     (make-push-state))))
+                                       (push-item input :input (make-push-state)))
                                top-float (top-item :float state)]
                            (if (number? top-float)
                              (Math/abs (- top-float target))
@@ -35,13 +33,10 @@
    :atom-generators (concat (list (fn [] (lrand 10))
                                   'in1)
                             @registered-instructions)
-   :epigenetic-markers []
    :genetic-operator-probabilities {:alternation 0.8
                                     :uniform-mutation 0.2}
-   :parent-selection :tournament
-   :tournament-size 7
-   :population-size 300
-   :max-points 400
-   :max-genome-size-in-initial-program 200
-   :max-generations 0
+   :parent-selection :lexicase
+   :population-size 800
+   :max-points 1000
+   :max-genome-size-in-initial-program 500
    })
