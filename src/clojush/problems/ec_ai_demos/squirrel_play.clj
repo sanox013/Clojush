@@ -31,11 +31,21 @@
    [59, false]
    [59, true]
    [60, false]
-   [59, true]
+   [60, true]
+   [61, true]
+   [61, false]
+   [89, false]
+   [89, true]
    [91, false]
    [91, true]
+   [99, false]
+   [99, true]
    [101, true]
-   [101, false]])
+   [101, false]
+   [105, true]
+   [105, false]
+   [200, true]
+   [200, false]])
 
 (defn expected-output
   [inputs]
