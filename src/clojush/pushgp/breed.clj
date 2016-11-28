@@ -1,3 +1,4 @@
+
 (ns clojush.pushgp.breed
   (:use [clojush globals random simplification individual evaluate translate]
         [clojush.pushgp parent-selection genetic-operators])
@@ -11,9 +12,16 @@
    :two-point-crossover {:fn two-point-crossover :parents 2}
    :uniform-crossover {:fn uniform-crossover :parents 2}
    :uniform-mutation {:fn uniform-mutation :parents 1}
+   :uniform-instruction-mutation {:fn uniform-instruction-mutation :parents 1}
+   :uniform-integer-mutation {:fn uniform-integer-mutation :parents 1}
+   :uniform-float-mutation {:fn uniform-float-mutation :parents 1}
+   :uniform-tag-mutation {:fn uniform-tag-mutation :parents 1}
+   :uniform-string-mutation {:fn uniform-string-mutation :parents 1}
+   :uniform-boolean-mutation {:fn uniform-boolean-mutation :parents 1}
    :uniform-close-mutation {:fn uniform-close-mutation :parents 1}
    :uniform-silence-mutation {:fn uniform-silence-mutation :parents 1}
    :uniform-deletion {:fn uniform-deletion :parents 1}
+   :uniform-addition {:fn uniform-addition :parents 1}
    :make-next-operator-revertable {:fn nil :parents 0}
    :autoconstruction {:fn autoconstruction :parents 2}
    })
@@ -21,7 +29,7 @@
 (defn revert-too-big-child
   "Determines what individual should replace a child program that exceeds the
    size limit. Options are:
-     :parent -- one of the parents (default)
+     :parent -- one of the parents
      :empty  -- an empty program
      :truncate -- truncate child after max points
      :random -- a random program
@@ -32,8 +40,8 @@
                  :as argmap}]
   (case replace-child-that-exceeds-size-limit-with
     :parent parent
-    :empty (make-individual :genome '() :genetic-operators :empty)
-    :truncate (assoc child :genome (take (/ max-points 4) (:genome child)))
+    :empty (make-individual :genome [] :genetic-operators :empty)
+    :truncate (assoc child :genome (vec (take (/ max-points 4) (:genome child))))
     :random (make-individual :genome (random-plush-genome max-genome-size-in-initial-program atom-generators argmap)
                              :genetic-operators :random)
     ))
@@ -82,23 +90,41 @@
              rand-gen
              argmap))))
 
+(defn update-instruction-map-uuids
+  "Takes an individual and updates the UUIDs on every instruction-map in its
+   :genome, except for the ones which are a random insertion."
+  [individual]
+  (update individual :genome
+          (fn [genome]
+            (mapv (fn [instruction-map]
+                   (if (:random-insertion instruction-map)
+                     (dissoc instruction-map :random-insertion)
+                     (assoc instruction-map
+                            :parent-uuid (:uuid instruction-map)
+                            :uuid (java.util.UUID/randomUUID))))
+                 genome))))
+
 (defn perform-genetic-operator
   "Takes a single genetic operator keyword or a sequence of operator keywords,
    and performs them to create a new individual. Uses recursive helper function
    even with a single operator by putting that operator in a vector."
   [operator population location rand-gen 
-   {:keys [max-points] :as argmap}]
+   {:keys [max-points
+           track-instruction-maps] :as argmap}]
   (let [first-parent (select population location argmap)
         operator-vector (if (sequential? operator) operator (vector operator))
         child (perform-genetic-operator-list operator-vector
                                              (assoc first-parent :parent-uuids (vector (:uuid first-parent)))
                                              population location rand-gen argmap)]
-    (if (> (count (:genome child))
-           (/ max-points 4)) ; Check if too big
-      (revert-too-big-child first-parent child argmap)
-        (assoc child
-               :genetic-operators operator
-               ))))
+    (cond->
+        (assoc child :genetic-operators operator)
+
+      (> (count (:genome child))
+         (/ max-points 4))
+      (as-> c (revert-too-big-child first-parent c argmap))
+
+      track-instruction-maps
+      (update-instruction-map-uuids))))
 
 (defn breed
   "Returns an individual bred from the given population using the given parameters."
@@ -112,3 +138,4 @@
         (if (<= prob (second (first vectored-go-probabilities)))
           (perform-genetic-operator (first (first vectored-go-probabilities)) population location rand-gen argmap)
           (recur (rest vectored-go-probabilities)))))))
+

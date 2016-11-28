@@ -11,8 +11,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; helper functions
 
+(defn default-problem-specific-initial-report
+  "Customize this for your own problem. It will be called at the beginning of the initial report."
+  [argmap]
+  :no-problem-specific-initial-report-function-defined)
+
 (defn default-problem-specific-report
-  "Customize this for your own problem. It will be called at the end of the generational report."
+  "Customize this for your own problem. It will be called at the beginning of the generational report."
   [best population generation error-function report-simplifications]
   :no-problem-specific-report-function-defined)
 
@@ -35,6 +40,9 @@
     (if (= param :random-seed)
       (println (name param) "=" (random/seed-to-string val))
       (println (name param) "=" val))))
+
+(defn print-genome [individual]
+  (pr-str (not-lazy (map #(dissoc % :uuid :parent-uuid) (:genome individual)))))
 
 (defn behavioral-diversity
   "Returns the behavioral diversity of the population, as described by David
@@ -98,12 +106,31 @@
                                                         :plush-genome-size (count (:genome individual))
                                                         :plush-genome (if (empty? (:genome individual))
                                                                         "()"
-                                                                        (not-lazy (:genome individual)))
-                                                        ) ; This is a map of an individual
+                                                                        (not-lazy (:genome individual))))
+                                                         ; This is a map of an individual
                                                  columns)
                                             (when (some #{:test-case-errors} csv-columns)
                                               (:errors individual))))
                           population)))))
+
+(defn edn-print
+  "Takes a population and appends all the individuals to the EDN log file.
+   If the internal representation of individuals changes in future versions
+   of Clojush, this code will likely continue to work, but will produce
+   output corresponding to the new representation."
+  [population generation edn-log-filename keys additional-keys]
+  (with-open [w (io/writer edn-log-filename :append true)] ;; Opens and closes the file once per call
+    (doall
+     (map-indexed (fn [index individual]
+                   (let [additional-data {:generation generation
+                                          :location index
+                                          :push-program-size (count-points (:program individual))
+                                          :plush-genome-size (count (:genome individual))}]
+                     (.write w "#clojush/individual")
+                     (.write w (prn-str (merge
+                                         (select-keys additional-data additional-keys)
+                                         (select-keys individual keys))))))
+          population))))
 
 (defn jsonize-individual
   "Takes an individual and returns it with only the items of interest
@@ -135,9 +162,9 @@
                                           generation
                                           %)
                                        population))]
-  (if (zero? generation)
-    (spit json-log-filename (str pop-json-string "\n") :append false)
-    (spit json-log-filename (str "," pop-json-string "\n") :append true))))
+   (if (zero? generation)
+     (spit json-log-filename (str pop-json-string "\n") :append false)
+     (spit json-log-filename (str "," pop-json-string "\n") :append true))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -146,8 +173,8 @@
 (defn lexicase-report
   "This extra report is printed whenever lexicase selection is used."
   [population {:keys [error-function report-simplifications print-errors
-                      print-history meta-error-categories
-                      ]}]
+                      print-history meta-error-categories]}]
+                      
   (let [min-error-by-case (apply map
                                  (fn [& args] (apply min args))
                                  (map :errors population))
@@ -172,10 +199,10 @@
                                 (map #(if (zero? %) 1 0)
                                      (:errors ind)))
                               population)
-        count-zero-by-case (map #(apply + %) (apply mapv vector pop-zero-by-case))
-        ]
+        count-zero-by-case (map #(apply + %) (apply mapv vector pop-zero-by-case))]
+        
     (println "--- Lexicse Program with Most Elite Cases Statistics ---")
-    (println "Lexicase best genome:" (pr-str (not-lazy (:genome lex-best))))
+    (println "Lexicase best genome:" (print-genome lex-best))
     (println "Lexicase best program:" (pr-str (not-lazy (:program lex-best))))
     (when (> report-simplifications 0)
       (println "Lexicase best partial simplification:"
@@ -193,7 +220,7 @@
     (println "Lexicase best size:" (count-points (:program lex-best)))
     (printf "Percent parens: %.3f\n" (double (/ (count-parens (:program lex-best)) (count-points (:program lex-best))))) ;Number of (open) parens / points
     (println "--- Lexicse Program with Most Zero Cases Statistics ---")
-    (println "Zero cases best genome:" (pr-str (not-lazy (:genome most-zero-cases-best))))
+    (println "Zero cases best genome:" (print-genome most-zero-cases-best))
     (println "Zero cases best program:" (pr-str (not-lazy (:program most-zero-cases-best))))
     (when (> report-simplifications 0)
       (println "Zero cases best partial simplification:"
@@ -216,15 +243,15 @@
     (println "Count of elite individuals by case:" count-elites-by-case)
     (println (format "Population mean number of elite cases: %.2f" (float (/ (apply + count-elites-by-case) (count population)))))
     (println "Count of perfect (error zero) individuals by case:" count-zero-by-case)
-    (println (format "Population mean number of perfect (error zero) cases: %.2f" (float (/ (apply + count-zero-by-case) (count population)))))
-    ))
+    (println (format "Population mean number of perfect (error zero) cases: %.2f" (float (/ (apply + count-zero-by-case) (count population)))))))
+    
 
 (defn implicit-fitness-sharing-report
   "This extra report is printed whenever implicit fitness sharing selection is used."
   [population {:keys [print-errors meta-error-categories]}]
   (let [ifs-best (apply min-key :weighted-error population)]
     (println "--- Program with Best Implicit Fitness Sharing Error Statistics ---")
-    (println "IFS best genome:" (pr-str (not-lazy (:genome ifs-best))))
+    (println "IFS best genome:" (print-genome ifs-best))
     (println "IFS best program:" (pr-str (not-lazy (:program ifs-best))))
     (when print-errors (println "IFS best errors:" (not-lazy (:errors ifs-best))))
     (when (and print-errors (not (empty? meta-error-categories)))
@@ -234,8 +261,8 @@
                                               (count (:errors ifs-best)))))
     (println "IFS best IFS error:" (:weighted-error ifs-best))
     (println "IFS best size:" (count-points (:program ifs-best)))
-    (printf "IFS best percent parens: %.3f\n" (double (/ (count-parens (:program ifs-best)) (count-points (:program ifs-best))))) ;Number of (open) parens / points
-    ))
+    (printf "IFS best percent parens: %.3f\n" (double (/ (count-parens (:program ifs-best)) (count-points (:program ifs-best))))))) ;Number of (open) parens / points
+    
 
 (defn report-and-check-for-success
   "Reports on the specified generation of a pushgp run. Returns the best
@@ -251,7 +278,8 @@
            ;; The following are for CSV or JSON logs
            print-csv-logs print-json-logs csv-log-filename json-log-filename
            log-fitnesses-for-all-cases json-log-program-strings
-           ]
+           print-edn-logs edn-keys edn-log-filename edn-additional-keys]
+           
     :as argmap}]
   (println)
   (println ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;")
@@ -264,29 +292,13 @@
         best (if (= (type psr-best) clojush.individual.individual)
                psr-best
                err-fn-best)
-        average (fn [nums]
-                  (if (zero? (count nums))
-                    "Cannot find average of zero numbers."
-                    (float (/ (apply +' nums) (count nums)))))
         standard-deviation (fn [nums]
                              (if (<= (count nums) 1)
                                (str "Cannot find standard deviation of " (count nums) "numbers. Must have at least 2.")
-                               (let [mean (average nums)]
+                               (let [mean (mean nums)]
                                  (Math/sqrt (/ (apply +' (map #(* (- % mean) (- % mean))
                                                               nums))
                                                (dec (count nums)))))))
-        median (fn [nums]
-                 (if (zero? (count nums))
-                   "Cannot find median of zero numbers."
-                   (let [sorted (sort nums)]
-                     (if (odd? (count nums))
-                       (nth sorted
-                            (truncate (/ (count nums) 2)))
-                       (/ (+' (nth sorted
-                                   (/ (count nums) 2))
-                              (nth sorted
-                                   (dec (/ (count nums) 2))))
-                          2.0)))))
         quartiles (fn [nums]
                     (if (zero? (count nums))
                       "Cannot find quartiles of zero numbers."
@@ -296,14 +308,14 @@
                                 (nth sorted
                                      (truncate (/ (count nums) 2)))
                                 (nth sorted
-                                     (truncate (/ (* 3 (count nums)) 4)))))))
-        ]
+                                     (truncate (/ (* 3 (count nums)) 4)))))))]
+        
     (when print-error-frequencies-by-case
       (println "Error frequencies by case:" (doall (map frequencies (apply map vector (map :errors population))))))
     (when (some #{parent-selection} #{:lexicase :elitegroup-lexicase :leaky-lexicase}) (lexicase-report population argmap))
     (when (= total-error-method :ifs) (implicit-fitness-sharing-report population argmap))
     (println (format "--- Best Program (%s) Statistics ---" (str "based on " (name err-fn))))
-    (println "Best genome:" (pr-str (not-lazy (:genome best))))
+    (println "Best genome:" (print-genome best))
     (println "Best program:" (pr-str (not-lazy (:program best))))
     (when (> report-simplifications 0)
       (println "Partial simplification:"
@@ -330,39 +342,36 @@
       (println "Cosmos Data:" (let [quants (config/quantiles (count population))]
                                 (zipmap quants (map #(:total-error (nth (sort-by :total-error population) %)) quants)))))
     (println "Average total errors in population:"
-             (*' 1.0 (/ (reduce +' (map :total-error sorted)) (count population))))
-    (println "Median total errors in population:"
-             (:total-error (nth sorted (truncate (/ (count sorted) 2)))))
+             (*' 1.0 (mean (map :total-error sorted))))
+    (println "Median total errors in population:" 
+             (median (map :total-error sorted)))
     (when print-errors (println "Error averages by case:"
-                                (apply map (fn [& args] (*' 1.0 (/ (reduce +' args) (count args))))
+                                (apply map (fn [& args] (*' 1.0 (mean args)))
                                        (map :errors population))))
     (when print-errors (println "Error minima by case:"
                                 (apply map (fn [& args] (apply min args))
                                        (map :errors population))))
     (when (and print-errors (not (empty? meta-error-categories)))
       (println "Meta-Error averages by category:"
-               (apply map (fn [& args] (*' 1.0 (/ (reduce +' args) (count args))))
+               (apply map (fn [& args] (*' 1.0 (mean args)))
                       (map :meta-errors population)))
       (println "Meta-Error minima by category:"
                (apply map (fn [& args] (apply min args))
                       (map :meta-errors population))))
     (println "Average genome size in population (length):"
-             (*' 1.0 (/ (reduce +' (map count (map :genome sorted)))
-                        (count population))))
+             (*' 1.0 (mean (map count (map :genome sorted)))))
     (println "Average program size in population (points):"
-             (*' 1.0 (/ (reduce +' (map count-points (map :program sorted)))
-                        (count population))))
-    (printf "Average percent parens in population: %.3f\n" (/ (apply + (map #(double (/ (count-parens (:program %)) (count-points (:program %)))) sorted))
-                                                              (count population)))
+             (*' 1.0 (mean (map count-points (map :program sorted)))))
+    (printf "Average percent parens in population: %.3f\n" (mean (map #(double (/ (count-parens (:program %)) (count-points (:program %)))) sorted)))
     (println "--- Population Diversity Statistics ---")
     (let [genome-frequency-map (frequencies (map :genome population))]
       (println "Min copy number of one Plush genome:" (apply min (vals genome-frequency-map)))
-      (println "Median copy number of one Plush genome:" (nth (sort (vals genome-frequency-map)) (Math/floor (/ (count genome-frequency-map) 2))))
+      (println "Median copy number of one Plush genome:" (median (vals genome-frequency-map)))
       (println "Max copy number of one Plush genome:" (apply max (vals genome-frequency-map)))
       (println "Genome diversity (% unique Plush genomes):\t" (float (/ (count genome-frequency-map) (count population)))))
     (let [frequency-map (frequencies (map :program population))]
       (println "Min copy number of one Push program:" (apply min (vals frequency-map)))
-      (println "Median copy number of one Push program:" (nth (sort (vals frequency-map)) (Math/floor (/ (count frequency-map) 2))))
+      (println "Median copy number of one Push program:" (median (vals frequency-map)))
       (println "Max copy number of one Push program:" (apply max (vals frequency-map)))
       (println "Syntactic diversity (% unique Push programs):\t" (float (/ (count frequency-map) (count population)))))
     (println "Total error diversity:\t\t\t\t" (float (/ (count (frequencies (map :total-error population))) (count population))))
@@ -377,12 +386,12 @@
             [first-quart-1 median-1 third-quart-1] (quartiles sample-1)]
         (println "--- Population Homology Statistics (all stats reference the sampled population edit distance of programs) ---")
         (println "Number of homology samples:" num-samples)
-        (println "Average:            " (average sample-1))
+        (println "Average:            " (mean sample-1))
         (println "Standard deviation: " (standard-deviation sample-1))
         (println "First quartile: " first-quart-1)
         (println "Median:         " median-1)
-        (println "Third quartile: " third-quart-1)
-        ))
+        (println "Third quartile: " third-quart-1)))
+        
     (when print-selection-counts
       (println "Selection counts:" (sort > (concat (vals @selection-counts)
                                                    (repeat (- population-size (count @selection-counts)) 0))))
@@ -416,6 +425,7 @@
     (when print-csv-logs (csv-print population generation argmap))
     (when print-json-logs (json-print population generation json-log-filename
                                       log-fitnesses-for-all-cases json-log-program-strings))
+    (when print-edn-logs (edn-print population generation edn-log-filename edn-keys edn-additional-keys))
     (cond (or (<= (:total-error best) error-threshold)
               (:success best)) [:success best]
           (>= generation max-generations) [:failure best]
@@ -424,7 +434,8 @@
 
 (defn initial-report
   "Prints the initial report of a PushGP run."
-  []
+  [{:keys [problem-specific-initial-report] :as push-argmap}]
+  (problem-specific-initial-report push-argmap)
   (println "Registered instructions:" @registered-instructions)
   (println "Starting PushGP run.")
   (printf "Clojush version = ")
@@ -457,7 +468,18 @@
     (catch Exception e
            (printf "Hash of last Git commit = unavailable\n")
            (printf "GitHub link = unavailable\n")
-           (flush))))
+           (flush)))
+  (if (:print-edn-logs push-argmap)
+    ;; The edn log is overwritten if it exists
+    (with-open [w (io/writer (:edn-log-filename push-argmap) :append false)]
+      (.write w "#clojush/run")
+      (.write w (prn-str (dissoc push-argmap
+                                 ;; These keys have functions
+                                 :atom-generators
+                                 :error-function
+                                 :problem-specific-report
+                                 :random-seed))))))
+
 
 (defn final-report
   "Prints the final report of a PushGP run if the run is successful."

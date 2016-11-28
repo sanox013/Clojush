@@ -1,6 +1,7 @@
 (ns clojush.instructions.string
   (:use [clojush pushstate globals]
-        [clojure.string :only [split trim]])
+        [clojure.string :only [split trim]]
+        clojush.instructions.vectors)
   (:require [clojure.string :as string]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
