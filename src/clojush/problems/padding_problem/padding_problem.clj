@@ -41,6 +41,17 @@
            (<= temperature 100)
            (<= temperature 90)))))
 
+(defn expected_output
+  [inputs]
+  (def compx (comparator (fn [x y] (> (clojure.string/join "" [x y]) (clojure.string/join "" [y x])))))
+  (let [sorted-inputs (java.util.Collections/sort inputs compx)
+        result (clojure.string/join "" (str 'sorted-inputs))]
+    result))
+
+(expected_output [70 50 6 51])
+
+(clojure.string/join "" [1 2 3])
+
 ; Make a new push state, and then add every
 ; input to the special `:input` stack.
 ; You shouldn't have to change this.
