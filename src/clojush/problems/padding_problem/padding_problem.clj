@@ -1,7 +1,7 @@
 ;; padding_problem.clj
 ;; Yuting, Shinny, & Ai, Fall 2016
 
-(ns clojush.problems.padding_problem.padding_problem
+(ns clojush.problems.ec-ai-demos.squirrel-play
   (:use [clojush.pushgp.pushgp]
         [clojush.random]
         [clojush pushstate interpreter]
@@ -24,13 +24,14 @@
    [62, 23, 4, 4]
    [33, 4, 2, 2, 9]])
 
+; Our expected-output function, will generating correct result for this padding problem
 (defn expected-output
   [inputs]
-  (sort
-    (fn [x y]
-      (> (read-string (clojure.string/join "" [x y]))
-         (read-string (clojure.string/join "" [y x]))))
-    inputs))
+  (let [sorted-inputs (sort (fn [x y] (> (read-string (clojure.string/join "" [x y])) (read-string (clojure.string/join "" [y x])))) inputs)]
+    (read-string (clojure.string/join "" sorted-inputs))))
+
+(expected-output [50, 56, 5])
+
 
 ; Make a new push state, and then add every
 ; input to the special `:input` stack.
@@ -48,7 +49,7 @@
   [program inputs]
   (let [start-state (make-start-state inputs)
         end-state (run-push program start-state)
-        result (top-item :boolean end-state)]
+        result (top-item end-state)] ;removed ":boolean", since our result would be a number.
     result))
 
 (defn all-errors
