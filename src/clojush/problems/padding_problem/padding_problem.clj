@@ -33,24 +33,29 @@
    [62, 23, 4, 4]
    [33, 4, 2, 2, 9]])
 
+;(defn expected-output
+  ;[inputs]
+  ;(def compx (comparator (fn [x y] (> (read-string (clojure.string/join "" [x y])) (read-string (clojure.string/join "" [y x]))))))
+  ;(let [sorted-inputs (java.util.Collections/sort inputs compx)
+        ;result (clojure.string/join "" sorted-inputs)]
+    ;result))
+
 (defn expected-output
   [inputs]
-  (let [[temperature is-summer] inputs]
-    (and (>= temperature 60)
-         (if is-summer
-           (<= temperature 100)
-           (<= temperature 90)))))
+  (sort (fn [x y] (> (read-string (clojure.string/join "" [x y])) (read-string (clojure.string/join "" [y x])))) inputs))
 
-(defn expected_output
-  [inputs]
-  (def compx (comparator (fn [x y] (> (clojure.string/join "" [x y]) (clojure.string/join "" [y x])))))
-  (let [sorted-inputs (java.util.Collections/sort inputs compx)
-        result (clojure.string/join "" (str 'sorted-inputs))]
-    result))
+(defn our-cmp [x y]
+  (compare (read-string (clojure.string/join "" [x y])) (read-string (clojure.string/join "" [y x]))))
 
-(expected_output [70 50 6 51])
+(def a [50 2 1 9])
+a
 
-(clojure.string/join "" [1 2 3])
+(sort (fn [x y] (> (read-string (clojure.string/join "" [x y])) (read-string (clojure.string/join "" [y x])))) a)
+
+(sort (fn [x y] (> (read-string (clojure.string/join "" [x y])) (read-string (clojure.string/join "" [y x])))) [50 2 1 9])
+(compare (read-string (clojure.string/join "" [5 50])) (read-string (clojure.string/join "" [50 5])))
+
+(expected-output [70 50 6 51])
 
 ; Make a new push state, and then add every
 ; input to the special `:input` stack.
