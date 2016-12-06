@@ -1,20 +1,11 @@
-;; squirrel_play.clj
-;; an example problem for clojush, a Push/PushGP system written in Clojure
-;; Nic McPhee, mcphee@morris.umn.edu, 2016
+;; padding_problem.clj
+;; Yuting, Shinny, & Ai, Fall 2016
 
-(ns clojush.problems.ec-ai-demos.squirrel-play
+(ns clojush.problems.padding_problem.padding_problem
   (:use [clojush.pushgp.pushgp]
         [clojush.random]
         [clojush pushstate interpreter]
         clojush.instructions.common))
-
-;;;;;;;;;;;;
-;; The squirrels in Palo Alto spend most of the day playing. In particular,
-;; they play if the temperature is between 60 and 90 (inclusive). Unless it
-;; is summer, then the upper limit is 100 instead of 90.
-;; Given an int temperature and a boolean is_summer, return true if the
-;; squirrels play and false otherwise.
-;; Taken from CodingBat: http://codingbat.com/prob/p135815
 
 (def input-set
   [[70, 50, 6, 51]
@@ -33,18 +24,13 @@
    [62, 23, 4, 4]
    [33, 4, 2, 2, 9]])
 
-;(defn expected-output
-  ;[inputs]
-  ;(def compx (comparator (fn [x y] (> (read-string (clojure.string/join "" [x y])) (read-string (clojure.string/join "" [y x]))))))
-  ;(let [sorted-inputs (java.util.Collections/sort inputs compx)
-        ;result (clojure.string/join "" sorted-inputs)]
-    ;result))
-
 (defn expected-output
   [inputs]
-  (sort (fn [x y] (> (read-string (clojure.string/join "" [x y])) (read-string (clojure.string/join "" [y x])))) inputs))
-
-(expected-output [5 50 56])
+  (sort
+    (fn [x y]
+      (> (read-string (clojure.string/join "" [x y]))
+         (read-string (clojure.string/join "" [y x]))))
+    inputs))
 
 ; Make a new push state, and then add every
 ; input to the special `:input` stack.
