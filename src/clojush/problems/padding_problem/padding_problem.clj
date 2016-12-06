@@ -40,24 +40,11 @@
         ;result (clojure.string/join "" sorted-inputs)]
     ;result))
 
-;some changes
-
 (defn expected-output
   [inputs]
   (sort (fn [x y] (> (read-string (clojure.string/join "" [x y])) (read-string (clojure.string/join "" [y x])))) inputs))
 
-(defn our-cmp [x y]
-  (compare (read-string (clojure.string/join "" [x y])) (read-string (clojure.string/join "" [y x]))))
-
-(def a [50 2 1 9])
-a
-
-(sort (fn [x y] (> (read-string (clojure.string/join "" [x y])) (read-string (clojure.string/join "" [y x])))) a)
-
-(sort (fn [x y] (> (read-string (clojure.string/join "" [x y])) (read-string (clojure.string/join "" [y x])))) [50 2 1 9])
-(compare (read-string (clojure.string/join "" [5 50])) (read-string (clojure.string/join "" [50 5])))
-
-(expected-output [70 50 6 51])
+(expected-output [5 50 56])
 
 ; Make a new push state, and then add every
 ; input to the special `:input` stack.
