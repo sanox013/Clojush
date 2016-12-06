@@ -1,20 +1,19 @@
-;; squirrel_play.clj
+;; padding_problem.clj
 ;; an example problem for clojush, a Push/PushGP system written in Clojure
 ;; Nic McPhee, mcphee@morris.umn.edu, 2016
 
-(ns clojush.problems.ec-ai-demos.squirrel-play
+(ns clojush.problems.padding_problem.padding_problem
   (:use [clojush.pushgp.pushgp]
         [clojush.random]
         [clojush pushstate interpreter]
         clojush.instructions.common))
 
 ;;;;;;;;;;;;
-;; The squirrels in Palo Alto spend most of the day playing. In particular,
-;; they play if the temperature is between 60 and 90 (inclusive). Unless it
-;; is summer, then the upper limit is 100 instead of 90.
-;; Given an int temperature and a boolean is_summer, return true if the
-;; squirrels play and false otherwise.
-;; Taken from CodingBat: http://codingbat.com/prob/p135815
+;; Our padding problem is defined as :
+;; Write a function that given a list of non negative integers,
+;; arranges them such that they form the largest possible number.
+;;For example, given [50, 2, 1, 9], the largest formed number is 95021.
+;; Taken from http://www.shiftedup.com/2015/05/07/five-programming-problems-every-software-engineer-should-be-able-to-solve-in-less-than-1-hour
 
 (def input-set
   [[70, 50, 6, 51]
@@ -34,6 +33,7 @@
    [33, 4, 2, 2, 9]])
 
 ; Our expected-output function, will generating correct result for this padding problem
+; code modified from http://www.shiftedup.com/2015/05/08/solution-to-problem-4
 (defn expected-output
   [inputs]
   (let [sorted-inputs (sort (fn [x y] (> (read-string (clojure.string/join "" [x y])) (read-string (clojure.string/join "" [y x])))) inputs)]
@@ -75,14 +75,14 @@
   (concat
     ; Include all the instructions that act on integers and booleans
     ; Could have :exec here, but I just am limiting things to exec-if
-    (registered-for-stacks [:integer :boolean])
-    (list 'exec_if)
+    (registered-for-stacks [:integer :boolean :string])
+    (list 'exec_if ':exec 'greaterthaner 'string_concat)
     ; A bunch of random numbers in case that's useful.
     ; (list (fn [] (lrand-int 100)))
     ; The three numeric constants that are specified in the problem statement
-    (list 60 90 100)
+    ;(list 60 90 100)
     ; The two inputs
-    (list 'in1 'in2)))
+    (list 'in1)))
 
 (def argmap
   {:error-function all-errors
