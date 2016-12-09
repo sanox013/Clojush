@@ -1,6 +1,6 @@
 ;; padding_problem.clj
-;; an example problem for clojush, a Push/PushGP system written in Clojure
-;; Nic McPhee, mcphee@morris.umn.edu, 2016
+;; Yuting, Shinny, & Ai, Fall 2016
+
 
 (ns clojush.problems.padding_problem.padding_problem
   (:use [clojush.pushgp.pushgp]
@@ -14,6 +14,7 @@
 ;; arranges them such that they form the largest possible number.
 ;;For example, given [50, 2, 1, 9], the largest formed number is 95021.
 ;; Taken from http://www.shiftedup.com/2015/05/07/five-programming-problems-every-software-engineer-should-be-able-to-solve-in-less-than-1-hour
+
 
 (def input-set
   [[70, 50, 6, 51]
@@ -58,7 +59,7 @@
   [program inputs]
   (let [start-state (make-start-state inputs)
         end-state (run-push program start-state)
-        result (top-item end-state)] ;removed ":boolean", since our result would be a number.
+        result (top-item :integer end-state)] ;changed ":boolean" to ":integer", since our result would be a number.
     result))
 
 (defn all-errors
@@ -75,8 +76,8 @@
   (concat
     ; Include all the instructions that act on integers and booleans
     ; Could have :exec here, but I just am limiting things to exec-if
-    (registered-for-stacks [:integer :boolean :string])
-    (list 'exec_if ':exec 'greaterthaner 'string_concat)
+    (registered-for-stacks [:integer :boolean :string :exec])
+    (list 'exec_if 'integer_gt 'string_concat)
     ; A bunch of random numbers in case that's useful.
     ; (list (fn [] (lrand-int 100)))
     ; The three numeric constants that are specified in the problem statement
