@@ -6,8 +6,7 @@
   (:use [clojush.pushgp.pushgp]
         [clojush.random]
         [clojush pushstate interpreter]
-        clojush.instructions.common
-        clojush.instructions.vectors))
+        clojush.instructions.common))
 
 ;;;;;;;;;;;;
 ;; Our padding problem is defined as :
@@ -18,31 +17,30 @@
 
 
 (def input-set
-  [[70, 50, 6, 51]
-   [87, 123, 3, 55]
-   [93, 12, 3, 32]
+  [[70, 50, 6]
+   [87, 123, 3]
+   [93, 12, 3]
    [95, 1, 3]
-   [90, 92]
+   [90, 92, 45]
    [60, 10, 30]
    [50, 21, 16]
-   [50, 2, 1, 9]
-   [13, 12, 9, 8]
+   [50, 2, 1]
+   [13, 12, 9]
    [100, 1, 32]
-   [105, 2, 3, 34, 53]
-   [59, 20, 34, 32]
+   [59, 20, 34]
    [69, 12, 3]
-   [62, 23, 4, 4]
-   [33, 4, 2, 2, 9]
+   [62, 23, 4]
+   [33, 4, 2]
    [32, 5, 6]
-   [77, 9, 12, 3]
-   [56, 7]
-   [11, 8, 19, 5, 10]
-   [78, 5]
-   [54, 80, 67, 98]
-   [34, 80]
-   [37, 83, 19, 53]
+   [77, 9, 12]
+   [56, 7, 3]
+   [11, 8, 19]
+   [78, 5, 33]
+   [54, 80, 67]
+   [34, 80, 97]
+   [37, 83, 19]
    [70, 12, 40]
-   [44, 8]])
+   [44, 8, 41]])
 
 ; Our expected-output function, will generating correct result for this padding problem
 ; code modified from http://www.shiftedup.com/2015/05/08/solution-to-problem-4
@@ -51,6 +49,7 @@
   (let [sorted-inputs (sort (fn [x y] (> (read-string (clojure.string/join "" [x y])) (read-string (clojure.string/join "" [y x])))) inputs)]
     (read-string (clojure.string/join "" sorted-inputs))))
 
+;example
 (expected-output [50, 56, 5])
 
 
@@ -73,7 +72,7 @@
         top-int (top-item :integer end-state)]
     top-int))
 
-
+; return absolute value
 (defn abs [n] (max n (- n)))
 
 
@@ -84,16 +83,15 @@
       (let [expected (expected-output inputs)
             actual (actual-output program inputs)]
         (if (= actual :no-stack-item)
-          1000
+          100000
           (abs (- expected actual)))))))
 
 
 (def atom-generators
   (concat
-    (registered-for-stacks [:integer :boolean :string :exec :vector])
-
-    ; have to find a way to pass into the right number of vector's elements
-    (list 'in1 'in2)))
+    (registered-for-stacks [:integer :boolean :string :exec])
+    (list 10 100 1000 10000 100000)
+    (list 'in1 'in2 'in3)))
 
 (def argmap
   {:error-function all-errors
