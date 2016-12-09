@@ -6,7 +6,8 @@
   (:use [clojush.pushgp.pushgp]
         [clojush.random]
         [clojush pushstate interpreter]
-        clojush.instructions.common))
+        clojush.instructions.common
+        clojush.instructions.vectors))
 
 ;;;;;;;;;;;;
 ;; Our padding problem is defined as :
@@ -31,7 +32,17 @@
    [59, 20, 34, 32]
    [69, 12, 3]
    [62, 23, 4, 4]
-   [33, 4, 2, 2, 9]])
+   [33, 4, 2, 2, 9]
+   [32, 5, 6]
+   [77, 9, 12, 3]
+   [56, 7]
+   [11, 8, 19, 5, 10]
+   [78, 5]
+   [54, 80, 67, 98]
+   [34, 80]
+   [37, 83, 19, 53]
+   [70, 12, 40]
+   [44, 8]])
 
 ; Our expected-output function, will generating correct result for this padding problem
 ; code modified from http://www.shiftedup.com/2015/05/08/solution-to-problem-4
@@ -59,8 +70,12 @@
   [program inputs]
   (let [start-state (make-start-state inputs)
         end-state (run-push program start-state)
-        result (top-item :integer end-state)] ;changed ":boolean" to ":integer", since our result would be a number.
-    result))
+        top-int (top-item :integer end-state)]
+    top-int))
+
+
+(defn abs [n] (max n (- n)))
+
 
 (defn all-errors
   [program]
@@ -68,22 +83,17 @@
     (for [inputs input-set]
       (let [expected (expected-output inputs)
             actual (actual-output program inputs)]
-        (if (= expected actual)
-          0
-          1)))))
+        (if (= actual :no-stack-item)
+          1000
+          (abs (- expected actual)))))))
+
 
 (def atom-generators
   (concat
-    ; Include all the instructions that act on integers and booleans
-    ; Could have :exec here, but I just am limiting things to exec-if
-    (registered-for-stacks [:integer :boolean :string :exec])
-    (list 'exec_if 'integer_gt 'string_concat)
-    ; A bunch of random numbers in case that's useful.
-    ; (list (fn [] (lrand-int 100)))
-    ; The three numeric constants that are specified in the problem statement
-    ;(list 60 90 100)
-    ; The two inputs
-    (list 'in1)))
+    (registered-for-stacks [:integer :boolean :string :exec :vector])
+
+    ; have to find a way to pass into the right number of vector's elements
+    (list 'in1 'in2)))
 
 (def argmap
   {:error-function all-errors
