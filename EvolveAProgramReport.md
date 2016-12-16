@@ -1,10 +1,8 @@
----
 title: "Evolve a program!"
 author: "Hu, Shinny, Sano, Ai, & Xiao, Yuting"
 date: "December 15, 2016"
----
 
-<font color="blue"><h4>__The description of our problem and why we chose it__</h4></font>
+<h4>__The description of our problem and why we chose it__</h4>
 Given a list of non-negative integers, the program should arrange them such that they form the largest possible
 number. For example, given [50, 2, 1, 9], the program should return “95021”. This problem was taken from the
 website titled “Five programming problems every Software Engineer should be able to solve in less than 1 hour ”
@@ -16,7 +14,7 @@ only by lexical comparison, but it actually requires more complex solution, whic
 section. Additionally this problem deals with permutations and combinations, which are important aspects to many
 advanced problems.
 
-<font color="blue"><h4>__How we set up the problem__</h4></font>
+<h4>__How we set up the problem__</h4>
 For “input-set”, at first, we fed the program a set of lists of positive integers, where each list differed in
 length (e.g., some lists contained four integers and others three integers); but it turned out that it made it
 more difficult for us to solve our problem. Therefore, we decided to “standardize” our inputs by using a set of
@@ -35,7 +33,7 @@ boolean and execute codes. However, it turned out to be too wide a selection ran
 only a few instructions for string, integer, boolean and execute_if function.
 
 
-<font color="blue"><h4>__Results__</h4></font>
+<h4>__Results__</h4>
 * When providing our program with all possible functions for string, integer, boolean and execution, we failed after
 one thousand generations, and we could not see any improvement during “evolution” process. Instead, we found that the
 first few generations would use solutions with a long list of functions, then it suddenly got cut down to only a few
