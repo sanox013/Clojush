@@ -7,7 +7,9 @@ output: html_document
 
 ### Problem description
 
-Given a list of non-negative integers, the program should arrange them such that they form the largest possible number. For example, given [50, 2, 1, 9], the program should return “95021”. This problem was taken from the website titled “[Five programming problems every Software Engineer should be able to solve in less than 1 hour](http://www.shiftedup.com/2015/05/07/five-programming-problems-every-software-engineer-should-be-able-to-solve-in-less-than-1-hour) ”. We found this problem interesting and chose it for our project due to the following reasons: The problem is not too simple but not too complicated, either; at a first glance it appears that this problem can be easily solved only by lexical comparison, but it actually requires more complex solution, which will be discussed in the next section. Additionally this problem deals with permutations and combinations, which are important aspects to many advanced problems.  
+Given a list of non-negative integers, the program should arrange them such that they form the largest possible number. For example, given [50, 2, 1, 9], the program should return “95021”. This problem was taken from the website titled “[Five programming problems every Software Engineer should be able to solve in less than 1 hour](http://www.shiftedup.com/2015/05/07/five-programming-problems-every-software-engineer-should-be-able-to-solve-in-less-than-1-hour) ”. 
+
+We found this problem interesting and chose it for our project due to the following reasons: The problem is not too simple but not too complicated, either; at a first glance it appears that this problem can be easily solved only by lexical comparison, but it actually requires more complex solution, which will be discussed in the next section. Additionally this problem deals with permutations and combinations, which are important aspects to many advanced problems.  
 
 ### Set up the problem
 
@@ -23,6 +25,6 @@ For “evolution” function, we started by giving the program full access to al
 
 * Later on, we tried using only a few functions instead; for example, exec_if, integer_lt, integer_gt, and string_concat. Unfortunately, our result didn’t get better after this change.
 
-* In order to simplify our problem furthermore and just to test the program, we changed our input sets into lists of three positive integers, all of which were two digits (e.g., [60, 10, 30], instead of [87, 123, 3]). This change made little difference to our [results](https://github.com/sanox013/Clojush/blob/master/sample_three_num.txt); so we reduced the number of integers even more and had two integers of two digits in each input list. After this change, the program generated the expected numbers successfully.
+* In order to simplify our problem furthermore and just to test the program, we changed our input sets into lists of three positive integers, all of which were two digits (e.g., [60, 10, 30], instead of [87, 123, 3]). This change made little difference to our [results](https://github.com/sanox013/Clojush/blob/master/result/result_three_num.txt); so we reduced the number of integers even more and had two integers of two digits in each input list. After this change, the program generated the expected numbers successfully.
 
-* Program: (exec_swap integer_add (in2 99 in2 integer_mult in1 integer_add in1 100 integer_mult integer_max))
+* The final program: (exec_swap integer_add (in2 99 in2 integer_mult in1 integer_add in1 100 integer_mult integer_max))
